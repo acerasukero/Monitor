@@ -64,8 +64,8 @@
     "prev": null
   },
   "gp_com.aniplex.fategrandorder_jp": {
-    "latest": "2.128.2",
-    "prev": null
+    "latest": "2.129.0",
+    "prev": "2.128.2"
   },
   "gp_com.hkmanjuu.azurlane.gp_tw": {
     "latest": "8.4.1",
