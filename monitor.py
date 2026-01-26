@@ -60,8 +60,9 @@ GITHUB_REPO_LIST = [
 # 格式：("动画名", "RSS订阅链接")
 RSS_LIST = [
     ("能帮我弄干净吗？", "https://mikanani.me/RSS/Bangumi?bangumiId=3826"),
-    ("达尔文事变", "https://mikanani.me/RSS/Bangumi?bangumiId=3852"),
-    ("非人学生与厌世教师", "https://mikanani.me/RSS/Bangumi?bangumiId=3845")
+    ("非人学生与厌世教师", "https://mikanani.me/RSS/Bangumi?bangumiId=3845"),
+    ("金牌得主-第2季", "https://mikanani.me/RSS/Bangumi?bangumiId=3822"),
+    ("皎洁迎宵之月", "https://mikanani.me/RSS/Bangumi?bangumiId=3859")
 ]
 
 # 6. 构建号比对配置
@@ -89,9 +90,10 @@ BUILD_NUMBER_CHECK_APPS = {
 # 格式：{"动画名": r"正则表达式"}
 # 未配置时默认匹配全部内容。建议配置以精确匹配所需内容
 RSS_REGEX_RULES = {
-    "能帮我弄干净吗？": r"六四位元字幕组.*1080",
-    "达尔文事变": r"LoliHouse.*1080",
-    "非人学生与厌世教师": r"黒ネズミたち.*CR.*1080"
+    "能帮我弄干净吗？": r"桜都字幕组.*1080.*简日内嵌",
+    "非人学生与厌世教师": r"桜都字幕组.*1080.*简体内嵌",
+    "金牌得主-第2季": r"喵萌奶茶屋.*1080",
+    "皎洁迎宵之月": r"六四位元字幕组.*1080"
 }
 
 # 8. 后缀显示配置
@@ -157,8 +159,9 @@ NOTIFICATION_GROUPS = {
     ],
     "动画更新": [
         "能帮我弄干净吗？",
-        "达尔文事变",
-        "非人学生与厌世教师"
+        "非人学生与厌世教师",
+        "金牌得主-第2季",
+        "皎洁迎宵之月"
     ]
 }
 
@@ -200,8 +203,9 @@ RICH_MEDIA_CONFIG = {
     "Telegram US": "https://261213.xyz/Telegram.png",
     "JMBQ悬浮窗": "https://261213.xyz/JMBQ.PNG",
     "能帮我弄干净吗？": "https://image.tmdb.org/t/p/w1280/1pRDbev2ITZCqHgow2pDvj4AEBP.jpg",
-    "达尔文事变": "https://image.tmdb.org/t/p/w1280/frh8aDHSjbnyHv2YU5fJBThEhK3.jpg",
-    "非人学生与厌世教师": "https://image.tmdb.org/t/p/w1280/1GmD3pP3aCQAknNem6yaQ5gP5os.jpg"
+    "非人学生与厌世教师": "https://image.tmdb.org/t/p/w1280/1GmD3pP3aCQAknNem6yaQ5gP5os.jpg",
+    "金牌得主-第2季": "https://image.tmdb.org/t/p/w1280/uvyh5dyGpXktH8Liq8eFhm7L9Ix.jpg",
+    "皎洁迎宵之月": "https://image.tmdb.org/t/p/w1280/3061lEeTTSb5NtX0ASXnRSO7Mo5.jpg",
 }
 
 # 12. Bark 历史消息归档配置
