@@ -92,7 +92,15 @@
     "prev": "[LoliHouse] \u8fbe\u5c14\u6587\u4e8b\u53d8 / Darwin Jihen - 02 [WebRip 1080p HEVC-10bit AAC][\u7b80\u7e41\u5185\u5c01\u5b57\u5e55]"
   },
   "rss_\u975e\u4eba\u5b66\u751f\u4e0e\u538c\u4e16\u6559\u5e08": {
-    "latest": "[\u9ed2\u30cd\u30ba\u30df\u305f\u3061] \u975e\u4eba\u5b66\u751f\u4e0e\u538c\u4e16\u6559\u5e08 / Jingai Kyoushitsu no Ningengirai Kyoushi - 03 (CR 1920x1080 AVC AAC MKV)",
-    "prev": "[\u9ed2\u30cd\u30ba\u30df\u305f\u3061] \u975e\u4eba\u5b66\u751f\u4e0e\u538c\u4e16\u6559\u5e08 / Jingai Kyoushitsu no Ningengirai Kyoushi - 02 (CR 1920x1080 AVC AAC MKV)"
+    "latest": "[\u685c\u90fd\u5b57\u5e55\u7ec4] \u975e\u4eba\u5b66\u751f\u4e0e\u538c\u4e16\u6559\u5e08 / Jingai Kyoushitsu no Ningengirai Kyoushi [03][1080p][\u7b80\u4f53\u5185\u5d4c]",
+    "prev": "[\u9ed2\u30cd\u30ba\u30df\u305f\u3061] \u975e\u4eba\u5b66\u751f\u4e0e\u538c\u4e16\u6559\u5e08 / Jingai Kyoushitsu no Ningengirai Kyoushi - 03 (CR 1920x1080 AVC AAC MKV)"
+  },
+  "rss_\u768e\u6d01\u8fce\u5bb5\u4e4b\u6708": {
+    "latest": "\u516d\u56db\u4f4d\u5143\u5b57\u5e55\u7ec4\u2605\u768e\u6d01\u6df1\u5bb5\u4e4b\u6708 Uruwashi no Yoi no Tsuki\u260502\u26051920x1080\u2605AVC AAC MP4\u2605\u7e41\u4f53\u4e2d\u6587",
+    "prev": null
+  },
+  "rss_\u91d1\u724c\u5f97\u4e3b-\u7b2c2\u5b63": {
+    "latest": "\u3010\u55b5\u840c\u5976\u8336\u5c4b\u3011\u260501\u6708\u65b0\u756a\u2605[\u91d1\u724c\u5f97\u4e3b / Medalist][14][1080p][\u7b80\u65e5\u53cc\u8bed][\u62db\u52df\u7ffb\u8bd1]",
+    "prev": null
   }
 }
