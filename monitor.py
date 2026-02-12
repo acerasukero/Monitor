@@ -18,11 +18,11 @@ from urllib3.util.retry import Retry
 # 格式：("应用名称", "AppID", "地区代码")
 # 【重要】名称必须与其他平台列表完全一致，才能进行多端比对
 APP_STORE_LIST = [
-    ("币安 HK", "1436799971", "hk"),
     ("PokePay HK", "6741506101", "hk"),
     ("PixEz TW", "1494435126", "tw"),
     ("Bybit US", "1488296980", "us"),
     ("Bitget Wallet US", "1395301115", "us"),
+    ("Ready US", "1358741926", "us"),
     ("Loon US", "1373567447", "us"),
     ("Telegram US", "686449807", "us"),
     ("Fate/Grand Order JP", "1015521325", "jp"),
@@ -146,11 +146,11 @@ NOTIFICATION_GROUPS = {
         "NIKKE KR"
     ],
     "应用更新": [
-        "币安 HK",
         "PokePay HK",
         "PixEz TW",
         "Bybit US",
-        "Bitget Wallet US",   
+        "Bitget Wallet US",
+        "Ready US",
         "Loon US",
         "Telegram US"   
     ],
@@ -194,11 +194,11 @@ RICH_MEDIA_CONFIG = {
     "IDOLY PRIDE JP": "https://261213.xyz/IDOLYPRIDE.png",
     "Project Sekai JP": "https://261213.xyz/ProjectSekai.png",
     "NIKKE KR": "https://261213.xyz/NIKKE.png",
-    "币安 HK": "https://261213.xyz/Binance.png",
     "PokePay HK": "https://261213.xyz/PokePay.png",
     "PixEz TW": "https://261213.xyz/PixEz.png",
     "Bybit US": "https://261213.xyz/Bybit.png",
     "Bitget Wallet US": "https://261213.xyz/Bitget%20Wallet.png",
+    "Ready US": "https://261213.xyz/Ready.png",
     "Loon US": "https://261213.xyz/Loon.png",
     "Telegram US": "https://261213.xyz/Telegram.png",
     "JMBQ悬浮窗": "https://261213.xyz/JMBQ.PNG",
