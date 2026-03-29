@@ -18,6 +18,8 @@ from urllib3.util.retry import Retry
 # 格式：("应用名称", "AppID", "地区代码")
 # 【重要】名称必须与其他平台列表完全一致，才能进行多端比对
 APP_STORE_LIST = [
+    ("币安 HK", "1436799971", "hk"),
+    ("欧易 HK", "1327268470", "hk"),
     ("PokePay HK", "6741506101", "hk"),
     ("PixEz TW", "1494435126", "tw"),
     ("Bybit US", "1488296980", "us"),
@@ -25,6 +27,7 @@ APP_STORE_LIST = [
     ("Ready US", "1358741926", "us"),
     ("Loon US", "1373567447", "us"),
     ("Telegram US", "686449807", "us"),
+    ("N26 DE", "956857223", "de"),
     ("Fate/Grand Order JP", "1015521325", "jp"),
     ("BanG Dream JP", "1195834442", "jp"),
     ("Project Sekai JP", "1489932710", "jp"),
@@ -90,7 +93,7 @@ BUILD_NUMBER_CHECK_APPS = {
 # 格式：{"动画名": r"正则表达式"}
 # 未配置时默认匹配全部内容。建议配置以精确匹配所需内容
 RSS_REGEX_RULES = {
-    "能帮我弄干净吗？": r"绿茶字幕组.*1080.*简日内嵌",
+    "能帮我弄干净吗？": r"黑白字幕组.*1080.*简日内嵌",
     "非人学生与厌世教师": r"桜都字幕组.*1080.*简体内嵌",
     "金牌得主-第2季": r"绿茶字幕组.*1080.*简日内嵌",
     "皎洁迎宵之月": r"六四位元字幕组.*1080.*繁体中文"
@@ -146,13 +149,16 @@ NOTIFICATION_GROUPS = {
         "NIKKE KR"
     ],
     "应用更新": [
+        "币安 HK",
+        "欧易 HK",
         "PokePay HK",
         "PixEz TW",
         "Bybit US",
         "Bitget Wallet US",
         "Ready US",
         "Loon US",
-        "Telegram US"   
+        "Telegram US",
+        "N26 DE"   
     ],
     "GitHub项目更新": [
         "JMBQ悬浮窗"
@@ -194,6 +200,8 @@ RICH_MEDIA_CONFIG = {
     "IDOLY PRIDE JP": "https://261213.xyz/IDOLYPRIDE.png",
     "Project Sekai JP": "https://261213.xyz/ProjectSekai.png",
     "NIKKE KR": "https://261213.xyz/NIKKE.png",
+    "币安 HK": "https://261213.xyz/Binance.png",
+    "欧易 HK": "https://261213.xyz/OKX.png",
     "PokePay HK": "https://261213.xyz/PokePay.png",
     "PixEz TW": "https://261213.xyz/PixEz.png",
     "Bybit US": "https://261213.xyz/Bybit.png",
@@ -201,6 +209,7 @@ RICH_MEDIA_CONFIG = {
     "Ready US": "https://261213.xyz/Ready.png",
     "Loon US": "https://261213.xyz/Loon.png",
     "Telegram US": "https://261213.xyz/Telegram.png",
+    "N26 DE": "https://261213.xyz/N26.png",
     "JMBQ悬浮窗": "https://261213.xyz/JMBQ.PNG",
     "能帮我弄干净吗？": "https://image.tmdb.org/t/p/w1280/1pRDbev2ITZCqHgow2pDvj4AEBP.jpg",
     "非人学生与厌世教师": "https://image.tmdb.org/t/p/w1280/1GmD3pP3aCQAknNem6yaQ5gP5os.jpg",
