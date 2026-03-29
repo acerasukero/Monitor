@@ -4,8 +4,8 @@
     "prev": "1.9.78"
   },
   "app_1436799971_hk": {
-    "latest": "3.10.3",
-    "prev": "3.10.1"
+    "latest": "3.12.0",
+    "prev": "3.10.3"
   },
   "app_6741506101_hk": {
     "latest": "1.2.5",
@@ -84,8 +84,8 @@
     "prev": "3.2.0"
   },
   "rss_\u80fd\u5e2e\u6211\u5f04\u5e72\u51c0\u5417\uff1f": {
-    "latest": "[\u7eff\u8336\u5b57\u5e55\u7ec4] \u80fd\u5e2e\u6211\u5f04\u5e72\u51c0\u5417\uff1f / Kirei ni Shite Moraemasu ka [07][WebRip][1080p][\u7b80\u65e5\u5185\u5d4c]",
-    "prev": "[\u7eff\u8336\u5b57\u5e55\u7ec4] \u80fd\u5e2e\u6211\u5f04\u5e72\u51c0\u5417\uff1f / Kirei ni Shite Moraemasu ka [06][WebRip][1080p][\u7b80\u65e5\u5185\u5d4c]"
+    "latest": "[\u9ed1\u767d\u5b57\u5e55\u7ec4]\u53ef\u4ee5\u5e2e\u5fd9\u6d17\u5e72\u51c0\u5417\uff1f / Kirei ni Shitemoraemasu ka [11] [webRip] [HEVC-8bit 1080P AAC] [\u7b80\u65e5\u5185\u5d4c](\u68c0\u7d22:\u80fd\u5e2e\u6211\u5f04\u5e72\u51c0\u5417\uff1f/\u5927\u59d0\u59d0\u7684\u7eee\u4e3d\u65e5\u5e38)",
+    "prev": "[\u7eff\u8336\u5b57\u5e55\u7ec4] \u80fd\u5e2e\u6211\u5f04\u5e72\u51c0\u5417\uff1f / Kirei ni Shite Moraemasu ka [07][WebRip][1080p][\u7b80\u65e5\u5185\u5d4c]"
   },
   "rss_\u8fbe\u5c14\u6587\u4e8b\u53d8": {
     "latest": "[LoliHouse] \u8fbe\u5c14\u6587\u4e8b\u53d8 / Darwin Jihen - 03 [WebRip 1080p HEVC-10bit AAC][\u7b80\u7e41\u5185\u5c01\u5b57\u5e55]",
@@ -106,5 +106,13 @@
   "app_1358741926_us": {
     "latest": "5.9.2",
     "prev": "5.9.1"
+  },
+  "app_1327268470_hk": {
+    "latest": "6.163.0",
+    "prev": null
+  },
+  "app_956857223_de": {
+    "latest": "4.46",
+    "prev": null
   }
 }
