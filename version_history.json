@@ -52,8 +52,8 @@
     "prev": null
   },
   "gp_com.YoStarJP.AzurLane_jp": {
-    "latest": "9.2.3",
-    "prev": null
+    "latest": "9.3.4",
+    "prev": "9.2.3"
   },
   "gp_com.aniplex.fategrandorder.en_us": {
     "latest": "2.89.0",
