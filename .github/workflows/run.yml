@@ -11,6 +11,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.9'
+          cache: 'pip'
       - run: pip install requests google-play-scraper feedparser
       - env:
           BARK_KEY: ${{ secrets.BARK_KEY }}
