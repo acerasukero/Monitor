@@ -367,28 +367,68 @@
 
     .group-list {
       display: grid;
+      gap: 12px;
+    }
+
+    .group-card {
+      display: grid;
       gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
     }
 
     .group-row {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) minmax(260px, 2fr) minmax(180px, 1.1fr) 44px;
+      grid-template-columns: minmax(180px, 1fr) minmax(260px, 2fr) minmax(180px, 1.1fr) 124px;
       gap: 10px;
       align-items: end;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--line);
     }
 
     .default-group-row {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) minmax(260px, 2fr) minmax(180px, 1.1fr) 44px;
+      grid-template-columns: minmax(180px, 1fr) minmax(260px, 2fr) minmax(180px, 1.1fr) 124px;
       gap: 10px;
       align-items: end;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .group-items {
+      display: grid;
+      gap: 6px;
+      padding-left: 10px;
+      border-left: 3px solid var(--line);
+    }
+
+    .group-items h4 {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .group-item-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) 124px;
+      gap: 10px;
+      align-items: center;
     }
 
     .rule-block {
       display: grid;
       gap: 12px;
+    }
+
+    .rule-controls {
+      display: grid;
+      grid-template-columns: 180px minmax(240px, 1fr);
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 12px;
     }
 
     .rule-section {
@@ -406,7 +446,7 @@
 
     .rule-grid {
       display: grid;
-      grid-template-columns: 120px 110px minmax(120px, 1fr) 120px 110px;
+      grid-template-columns: 120px 120px minmax(120px, 1fr) 110px 150px 130px;
       gap: 8px;
       align-items: center;
     }
@@ -445,7 +485,7 @@
       .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
       .nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .tools, .group-row, .default-group-row, .rule-grid, .setting-grid, .form-grid {
+      .tools, .group-row, .default-group-row, .rule-controls, .rule-grid, .setting-grid, .form-grid {
         grid-template-columns: 1fr;
       }
       .span-2, .span-3, .span-4, .span-5, .span-6, .span-7, .span-8, .span-12 {
@@ -478,7 +518,7 @@
         <nav class="nav">
           <button data-tab="items" class="active">监控项目</button>
           <button data-tab="groups">分组</button>
-          <button data-tab="display">显示规则</button>
+          <button data-tab="display">后缀与比对</button>
           <button data-tab="json">JSON</button>
           <button data-tab="settings">设置</button>
         </nav>
@@ -555,9 +595,19 @@
 
         <section id="displayTab" class="panel hidden">
           <div class="panel-head">
-            <h2 class="panel-title">显示规则</h2>
+            <h2 class="panel-title">后缀显示与构建号比对</h2>
           </div>
-          <div id="displaygrid" class="panel-body rule-block"></div>
+          <div class="panel-body">
+            <div class="rule-controls">
+              <label>配置层级
+                <select id="displaylevel"></select>
+              </label>
+              <label id="displayownerlabel">对象
+                <select id="displayowner"></select>
+              </label>
+            </div>
+            <div id="displaygrid" class="rule-block"></div>
+          </div>
         </section>
 
         <section id="jsonTab" class="panel hidden">
@@ -681,6 +731,7 @@
       sha: null,
       validation: null,
       activeTab: "items",
+      display: { level: "global", owner: "" },
       settings: loadSettings(),
     };
 
@@ -958,7 +1009,6 @@
           if (field === "group") setGroup(ref.name, node.value);
           if (field === "regex") state.config.rss_regex_rules[ref.name] = node.value.trim();
           if (field === "media") state.config.rich_media_config[ref.name] = node.value.trim();
-          if (field === "build") setAppBuild(ref.name, ref.source, node.checked);
           if (["name", "target", "region"].includes(field)) setItemField(ref, field, node.value.trim());
           render();
         });
@@ -995,7 +1045,6 @@
                   <th>分组</th>
                   ${regexth}
                   <th>富媒体文件URL</th>
-                  <th>项目级构建号</th>
                   <th></th>
                 </tr>
               </thead>
@@ -1011,7 +1060,6 @@
       const group = groupOf(ref.name);
       const regex = state.config.rss_regex_rules[ref.name] || "";
       const media = state.config.rich_media_config[ref.name] || "";
-      const build = state.config.build_number_check.apps?.[ref.name]?.[ref.source] || false;
       const regiontd = ref.meta.region ? `<td><input data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="region" value="${escapeAttr(ref.region)}"></td>` : "";
       const regextd = ref.source === "RSS" ? `<td><input data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="regex" value="${escapeAttr(regex)}"></td>` : "";
       return `
@@ -1022,7 +1070,6 @@
           <td><select data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="group">${getGroups().map((item) => `<option value="${escapeAttr(item)}" ${item === group ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}</select></td>
           ${regextd}
           <td><input data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="media" value="${escapeAttr(media)}"></td>
-          <td><label class="checks"><input type="checkbox" data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="build" ${build ? "checked" : ""}>保留</label></td>
           <td class="tight"><button class="icon danger" data-delete data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" title="删除">×</button></td>
         </tr>`;
     }
@@ -1036,11 +1083,6 @@
       return { source, meta, index, item, name: item[0] || "", target: item[1] || "", region: item[2] || "" };
     }
 
-    function setAppBuild(name, source, checked) {
-      state.config.build_number_check.apps[name] ||= {};
-      state.config.build_number_check.apps[name][source] = checked;
-    }
-
     function renderGroups() {
       if (!state.config) return;
       el("defaultgroupinput").value = state.config.default_group || "";
@@ -1049,17 +1091,35 @@
 
       const list = el("grouplist");
       list.innerHTML = Object.keys(state.config.notification_groups || {}).map((group) => `
-        <div class="group-row" data-group="${escapeAttr(group)}">
-          <label>分组名称
-            <input data-group-field="name" value="${escapeAttr(group)}">
-          </label>
-          <label>图标URL
-            <input data-group-field="icon" value="${escapeAttr(state.config.notification_icons[group] || "")}">
-          </label>
-          <label>Bark分组名称
-            <input data-group-field="archive" value="${escapeAttr(state.config.bark_archive_mapping[group] || "")}">
-          </label>
-          <button class="icon danger" data-delete-group="${escapeAttr(group)}" title="删除">×</button>
+        <div class="group-card" data-group="${escapeAttr(group)}">
+          <div class="group-row">
+            <label>分组名称
+              <input data-group-field="name" value="${escapeAttr(group)}">
+            </label>
+            <label>图标URL
+              <input data-group-field="icon" value="${escapeAttr(state.config.notification_icons[group] || "")}">
+            </label>
+            <label>Bark分组名称
+              <input data-group-field="archive" value="${escapeAttr(state.config.bark_archive_mapping[group] || "")}">
+            </label>
+            <div class="row-actions">
+              <button class="icon" data-move-group="-1" title="上移">↑</button>
+              <button class="icon" data-move-group="1" title="下移">↓</button>
+              <button class="icon danger" data-delete-group="${escapeAttr(group)}" title="删除">×</button>
+            </div>
+          </div>
+          <div class="group-items">
+            <h4>组内推送顺序</h4>
+            ${(state.config.notification_groups[group] || []).map((name, index) => `
+              <div class="group-item-row">
+                <div>${escapeHtml(index + 1)}. ${escapeHtml(name)}</div>
+                <div class="row-actions">
+                  <button class="icon" data-move-group-item="${index}" data-direction="-1" title="上移">↑</button>
+                  <button class="icon" data-move-group-item="${index}" data-direction="1" title="下移">↓</button>
+                  <button class="icon danger" data-remove-group-item="${index}" title="移出分组">×</button>
+                </div>
+              </div>`).join("") || "<div class=\"status\">暂无项目，未分组项目会使用默认分组。</div>"}
+          </div>
         </div>`).join("");
 
       list.querySelectorAll("[data-group-field]").forEach((node) => {
@@ -1083,6 +1143,30 @@
           render();
         });
       });
+
+      list.querySelectorAll("[data-move-group]").forEach((node) => {
+        node.addEventListener("click", () => {
+          const group = node.closest("[data-group]").dataset.group;
+          moveGroup(group, Number(node.dataset.moveGroup));
+          render();
+        });
+      });
+
+      list.querySelectorAll("[data-move-group-item]").forEach((node) => {
+        node.addEventListener("click", () => {
+          const group = node.closest("[data-group]").dataset.group;
+          moveGroupItem(group, Number(node.dataset.moveGroupItem), Number(node.dataset.direction));
+          render();
+        });
+      });
+
+      list.querySelectorAll("[data-remove-group-item]").forEach((node) => {
+        node.addEventListener("click", () => {
+          const group = node.closest("[data-group]").dataset.group;
+          state.config.notification_groups[group].splice(Number(node.dataset.removeGroupItem), 1);
+          render();
+        });
+      });
     }
 
     function renameGroup(oldgroup, newgroup) {
@@ -1095,97 +1179,144 @@
       moveKey(state.config.suffix_config.groups, oldgroup, newgroup);
     }
 
+    function moveGroup(group, direction) {
+      const keys = Object.keys(state.config.notification_groups || {});
+      const index = keys.indexOf(group);
+      const next = index + direction;
+      if (index < 0 || next < 0 || next >= keys.length) return;
+      [keys[index], keys[next]] = [keys[next], keys[index]];
+      const current = state.config.notification_groups;
+      state.config.notification_groups = Object.fromEntries(keys.map((key) => [key, current[key]]));
+    }
+
+    function moveGroupItem(group, index, direction) {
+      const items = state.config.notification_groups[group] || [];
+      const next = index + direction;
+      if (index < 0 || next < 0 || next >= items.length) return;
+      [items[index], items[next]] = [items[next], items[index]];
+    }
+
     function renderDisplay() {
       if (!state.config) return;
-      el("displaygrid").innerHTML = `
-        ${renderGlobalRules()}
-        ${renderGroupRules()}
-        ${renderAppRules()}
-      `;
+      renderDisplayControls();
+      el("displaygrid").innerHTML = renderSelectedRules();
       bindDisplayRules();
     }
 
-    function renderGlobalRules() {
+    function renderDisplayControls() {
+      fillSelect(el("displaylevel"), [["全局", "global"], ["分组", "group"], ["项目", "app"]], state.display.level);
+      const ownerlabel = el("displayownerlabel");
+      const ownerselect = el("displayowner");
+      if (state.display.level === "global") {
+        ownerlabel.classList.add("hidden");
+        ownerselect.innerHTML = "";
+        state.display.owner = "";
+        return;
+      }
+
+      ownerlabel.classList.remove("hidden");
+      const options = getDisplayOwnerOptions(state.display.level);
+      if (!options.some((option) => option[1] === state.display.owner)) {
+        state.display.owner = options[0]?.[1] || "";
+      }
+      fillSelect(ownerselect, options, state.display.owner);
+    }
+
+    function getDisplayOwnerOptions(level) {
+      if (level === "group") {
+        return getGroups(false).map((group) => [group, group]);
+      }
+      const names = [...new Set(getItems().map((item) => item.name).filter(Boolean))];
+      return names.map((name) => [name, name]);
+    }
+
+    function renderSelectedRules() {
+      const level = state.display.level;
+      const owner = state.display.owner;
+      if (level === "group" && !owner) return "<div class=\"status\">暂无分组</div>";
+      if (level === "app" && !owner) return "<div class=\"status\">暂无监控项目</div>";
+
+      const title = level === "global" ? "全局默认配置" : level === "group" ? `分组级配置：${owner}` : `应用级配置：${owner}`;
+      const sources = level === "app"
+        ? getItems().filter((item) => item.name === owner).map((item) => item.source)
+        : SOURCE_NAMES;
+
       return `
         <section class="rule-section">
-          <h3>全局规则</h3>
-          ${ruleHeader(false)}
-          ${SOURCE_NAMES.map((source) => {
-            const suffix = state.config.suffix_config.global[source] || [source, true];
-            const build = Boolean(state.config.build_number_check.global[source]);
-            return ruleRow({ level: "global", owner: "global", source, suffix, build, suffixenabled: true, buildenabled: true, fixed: true });
-          }).join("")}
+          <h3>${escapeHtml(title)}</h3>
+          ${level === "global"
+            ? "<div class=\"status\">全局默认配置用于兜底。构建号比对开启时，1.0(1) 与 1.0(2) 视为不同版本，通知也保留括号内容；关闭时忽略括号内容，通知也去掉括号内容。</div>"
+            : "<div class=\"status\">应用级优先于分组级，分组级优先于全局默认。选择“继承上级”会删除这一层配置，回退到上一级。</div>"}
+          ${ruleHeader(level === "global")}
+          ${sources.map((source) => ruleRow(ruleState(level, owner, source))).join("")}
         </section>`;
     }
 
-    function renderGroupRules() {
-      const groups = getGroups(false);
-      return `
-        <section class="rule-section">
-          <h3>分组级规则</h3>
-          ${groups.length ? groups.map((group) => `
-            <div class="rule-section">
-              <h3>${escapeHtml(group)}</h3>
-              ${ruleHeader(true)}
-              ${SOURCE_NAMES.map((source) => {
-                const suffixenabled = Boolean(state.config.suffix_config.groups[group]?.[source]);
-                const buildenabled = state.config.build_number_check.groups[group]?.[source] !== undefined;
-                const suffix = state.config.suffix_config.groups[group]?.[source] || ["", true];
-                const build = Boolean(state.config.build_number_check.groups[group]?.[source]);
-                return ruleRow({ level: "group", owner: group, source, suffix, build, suffixenabled, buildenabled });
-              }).join("")}
-            </div>`).join("") : "<div class=\"status\">暂无分组</div>"}
-        </section>`;
+    function ruleState(level, owner, source) {
+      if (level === "global") {
+        return {
+          level,
+          owner: "global",
+          source,
+          suffixmode: "override",
+          suffix: state.config.suffix_config.global[source] || [source, true],
+          buildmode: "override",
+          build: Boolean(state.config.build_number_check.global[source]),
+          fixed: true,
+        };
+      }
+
+      const bucket = level === "group" ? "groups" : "apps";
+      const suffixvalue = state.config.suffix_config[bucket]?.[owner]?.[source];
+      const buildvalue = state.config.build_number_check[bucket]?.[owner]?.[source];
+      return {
+        level,
+        owner,
+        source,
+        suffixmode: suffixvalue ? "override" : "inherit",
+        suffix: suffixvalue || ["", true],
+        buildmode: buildvalue === undefined ? "inherit" : "override",
+        build: Boolean(buildvalue),
+        fixed: false,
+      };
     }
 
-    function renderAppRules() {
-      const items = getItems();
-      return `
-        <section class="rule-section">
-          <h3>项目级规则</h3>
-          ${items.length ? items.map((item) => `
-            <div class="rule-section">
-              <h3>${escapeHtml(item.name)} · ${escapeHtml(item.source)}</h3>
-              ${ruleHeader(true)}
-              ${(() => {
-                const suffixenabled = Boolean(state.config.suffix_config.apps[item.name]?.[item.source]);
-                const buildenabled = state.config.build_number_check.apps[item.name]?.[item.source] !== undefined;
-                const suffix = state.config.suffix_config.apps[item.name]?.[item.source] || ["", true];
-                const build = Boolean(state.config.build_number_check.apps[item.name]?.[item.source]);
-                return ruleRow({ level: "app", owner: item.name, source: item.source, suffix, build, suffixenabled, buildenabled });
-              })()}
-            </div>`).join("") : "<div class=\"status\">暂无监控项目</div>"}
-        </section>`;
-    }
-
-    function ruleHeader(override) {
+    function ruleHeader(global) {
       return `
         <div class="rule-grid header">
           <div>来源</div>
-          <div>${override ? "后缀覆盖" : "后缀"}</div>
-          <div>后缀文本</div>
-          <div>显示后缀</div>
-          <div>${override ? "构建号覆盖" : "保留构建号"}</div>
+          <div>${global ? "后缀配置" : "后缀配置"}</div>
+          <div>推送后缀文本</div>
+          <div>推送时显示后缀</div>
+          <div>构建号比对配置</div>
+          <div>括号内容处理</div>
         </div>`;
     }
 
     function ruleRow(data) {
+      const suffixdisabled = !data.fixed && data.suffixmode === "inherit";
+      const builddisabled = !data.fixed && data.buildmode === "inherit";
       return `
         <div class="rule-grid">
           <div>${escapeHtml(data.source)}</div>
-          <label class="checks"><input type="checkbox" data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixenabled" ${data.suffixenabled ? "checked" : ""} ${data.fixed ? "disabled" : ""}>启用</label>
-          <input data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixtext" value="${escapeAttr(data.suffix[0] || "")}" ${data.suffixenabled ? "" : "disabled"}>
-          <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixvisible" ${data.suffixenabled ? "" : "disabled"}>
+          <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixmode" ${data.fixed ? "disabled" : ""}>
+            <option value="inherit" ${data.suffixmode === "inherit" ? "selected" : ""}>继承上级</option>
+            <option value="override" ${data.suffixmode === "override" ? "selected" : ""}>自定义</option>
+          </select>
+          <input data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixtext" value="${escapeAttr(data.suffix[0] || "")}" ${suffixdisabled ? "disabled" : ""}>
+          <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixvisible" ${suffixdisabled ? "disabled" : ""}>
             <option value="true" ${data.suffix[1] ? "selected" : ""}>是</option>
             <option value="false" ${!data.suffix[1] ? "selected" : ""}>否</option>
           </select>
-          <label class="checks"><input type="checkbox" data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="build" ${data.build ? "checked" : ""} ${!data.fixed && !data.buildenabled ? "disabled" : ""}>保留</label>
-        </div>
-        ${data.fixed ? "" : `
-        <div class="rule-grid">
-          <div></div><div></div><div></div><div></div>
-          <label class="checks"><input type="checkbox" data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="buildenabled" ${data.buildenabled ? "checked" : ""}>启用构建号覆盖</label>
-        </div>`}`;
+          <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="buildmode" ${data.fixed ? "disabled" : ""}>
+            <option value="inherit" ${data.buildmode === "inherit" ? "selected" : ""}>继承上级</option>
+            <option value="override" ${data.buildmode === "override" ? "selected" : ""}>自定义</option>
+          </select>
+          <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="build" ${builddisabled ? "disabled" : ""}>
+            <option value="true" ${data.build ? "selected" : ""}>开启比对并保留</option>
+            <option value="false" ${!data.build ? "selected" : ""}>关闭比对并去除</option>
+          </select>
+        </div>`;
     }
 
     function bindDisplayRules() {
@@ -1206,8 +1337,8 @@
       const suffixroot = level === "global" ? state.config.suffix_config.global : ensureNested(state.config.suffix_config, level, owner);
       const buildroot = level === "global" ? state.config.build_number_check.global : ensureNested(state.config.build_number_check, level, owner);
 
-      if (field === "suffixenabled") {
-        if (node.checked) suffixroot[source] = suffixroot[source] || ["", true];
+      if (field === "suffixmode") {
+        if (node.value === "override") suffixroot[source] = suffixroot[source] || ["", true];
         else delete suffixroot[source];
       }
       if (field === "suffixtext") {
@@ -1218,14 +1349,12 @@
         suffixroot[source] = suffixroot[source] || ["", true];
         suffixroot[source][1] = node.value === "true";
       }
-      if (field === "buildenabled") {
-        if (node.checked) buildroot[source] = Boolean(buildroot[source]);
+      if (field === "buildmode") {
+        if (node.value === "override") buildroot[source] = Boolean(buildroot[source]);
         else delete buildroot[source];
       }
       if (field === "build") {
-        if (level === "global" || buildroot[source] !== undefined) {
-          buildroot[source] = node.checked;
-        }
+        if (level === "global" || buildroot[source] !== undefined) buildroot[source] = node.value === "true";
       }
     }
 
@@ -1405,6 +1534,15 @@
       el("sourcefilter").addEventListener("change", renderItems);
       el("groupfilter").addEventListener("change", renderItems);
       el("searchinput").addEventListener("input", renderItems);
+      el("displaylevel").addEventListener("change", () => {
+        state.display.level = el("displaylevel").value;
+        state.display.owner = "";
+        renderDisplay();
+      });
+      el("displayowner").addEventListener("change", () => {
+        state.display.owner = el("displayowner").value;
+        renderDisplay();
+      });
 
       el("defaultgroupinput").addEventListener("change", () => {
         const olddefault = state.config.default_group;
