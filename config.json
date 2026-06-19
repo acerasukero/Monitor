@@ -1,146 +1,41 @@
 {
   "app_store_list": [
-    [
-      "币安 HK",
-      "1436799971",
-      "hk"
-    ],
-    [
-      "欧易 HK",
-      "1327268470",
-      "hk"
-    ],
-    [
-      "PokePay HK",
-      "6741506101",
-      "hk"
-    ],
-    [
-      "PixEz TW",
-      "1494435126",
-      "tw"
-    ],
-    [
-      "Bybit US",
-      "1488296980",
-      "us"
-    ],
-    [
-      "Bitget Wallet US",
-      "1395301115",
-      "us"
-    ],
-    [
-      "Ready US",
-      "1358741926",
-      "us"
-    ],
-    [
-      "Loon US",
-      "1373567447",
-      "us"
-    ],
-    [
-      "Telegram US",
-      "686449807",
-      "us"
-    ],
-    [
-      "N26 DE",
-      "956857223",
-      "de"
-    ],
-    [
-      "Fate/Grand Order JP",
-      "1015521325",
-      "jp"
-    ],
-    [
-      "BanG Dream JP",
-      "1195834442",
-      "jp"
-    ],
-    [
-      "Project Sekai JP",
-      "1489932710",
-      "jp"
-    ],
-    [
-      "IDOLY PRIDE JP",
-      "1535925293",
-      "jp"
-    ],
-    [
-      "NIKKE KR",
-      "1585915174",
-      "kr"
-    ]
+    ["币安 HK", "1436799971", "hk"],
+    ["欧易 HK", "1327268470", "hk"],
+    ["PokePay HK", "6741506101", "hk"],
+    ["PixEz TW", "1494435126", "tw"],
+    ["Bybit US", "1488296980", "us"],
+    ["Bitget Wallet US", "1395301115", "us"],
+    ["Ready US", "1358741926", "us"],
+    ["Loon US", "1373567447", "us"],
+    ["Telegram US", "686449807", "us"],
+    ["N26 DE", "956857223", "de"],
+    ["Fate/Grand Order JP", "1015521325", "jp"],
+    ["BanG Dream JP", "1195834442", "jp"],
+    ["Project Sekai JP", "1489932710", "jp"],
+    ["IDOLY PRIDE JP", "1535925293", "jp"],
+    ["NIKKE KR", "1585915174", "kr"]
   ],
   "google_play_list": [
-    [
-      "Fate/Grand Order JP",
-      "com.aniplex.fategrandorder",
-      "jp"
-    ],
-    [
-      "Fate/Grand Order TW",
-      "com.xiaomeng.fategrandorder",
-      "tw"
-    ],
-    [
-      "Fate/Grand Order US",
-      "com.aniplex.fategrandorder.en",
-      "us"
-    ],
-    [
-      "碧蓝航线 JP",
-      "com.YoStarJP.AzurLane",
-      "jp"
-    ],
-    [
-      "碧蓝航线 US",
-      "com.YoStarEN.AzurLane",
-      "us"
-    ],
-    [
-      "碧蓝航线 TW",
-      "com.hkmanjuu.azurlane.gp",
-      "tw"
-    ]
+    ["Fate/Grand Order JP", "com.aniplex.fategrandorder", "jp"],
+    ["Fate/Grand Order TW", "com.xiaomeng.fategrandorder", "tw"],
+    ["Fate/Grand Order US", "com.aniplex.fategrandorder.en", "us"],
+    ["碧蓝航线 JP", "com.YoStarJP.AzurLane", "jp"],
+    ["碧蓝航线 US", "com.YoStarEN.AzurLane", "us"],
+    ["碧蓝航线 TW", "com.hkmanjuu.azurlane.gp", "tw"]
   ],
   "taptap_list": [
-    [
-      "Fate/Grand Order CN",
-      "12982"
-    ],
-    [
-      "碧蓝航线 CN",
-      "31597"
-    ]
+    ["Fate/Grand Order CN", "12982"],
+    ["碧蓝航线 CN", "31597"]
   ],
   "github_repo_list": [
-    [
-      "JMBQ悬浮窗",
-      "JMBQ/azurlane"
-    ]
+    ["JMBQ悬浮窗", "JMBQ/azurlane"]
   ],
   "rss_list": [
-    [
-      "能帮我弄干净吗？",
-      "https://mikanani.me/RSS/Bangumi?bangumiId=3826"
-    ],
-    [
-      "非人学生与厌世教师",
-      "https://mikanani.me/RSS/Bangumi?bangumiId=3845"
-    ],
-    [
-      "金牌得主-第2季",
-      "https://mikanani.me/RSS/Bangumi?bangumiId=3822"
-    ],
-    [
-      "皎洁迎宵之月",
-      "https://mikanani.me/RSS/Bangumi?bangumiId=3859"
-    ]
+    ["能帮我弄干净吗？", "https://mikanani.me/RSS/Bangumi?bangumiId=3826"],
+    ["非人学生与厌世教师", "https://mikanani.me/RSS/Bangumi?bangumiId=3845"],
+    ["金牌得主-第2季", "https://mikanani.me/RSS/Bangumi?bangumiId=3822"],
+    ["皎洁迎宵之月", "https://mikanani.me/RSS/Bangumi?bangumiId=3859"]
   ],
   "build_number_check": {
     "global": {
@@ -169,47 +64,23 @@
   },
   "suffix_config": {
     "global": {
-      "App Store": [
-        "iOS",
-        true
-      ],
-      "Google Play": [
-        "Android",
-        true
-      ],
-      "TapTap": [
-        "Android",
-        true
-      ],
-      "GitHub": [
-        "GitHub",
-        false
-      ],
-      "RSS": [
-        "RSS",
-        false
-      ]
+      "App Store": ["iOS", true],
+      "Google Play": ["Android", true],
+      "TapTap": ["Android", true],
+      "GitHub": ["GitHub", true],
+      "RSS": ["RSS", false]
     },
     "groups": {
       "应用更新": {
-        "App Store": [
-          "iOS",
-          false
-        ]
+        "App Store": ["iOS", false]
       },
       "GitHub项目更新": {
-        "GitHub": [
-          "GitHub",
-          false
-        ]
+        "GitHub": ["GitHub", false]
       }
     },
     "apps": {
       "Loon US": {
-        "App Store": [
-          "iOS",
-          false
-        ]
+        "App Store": ["iOS", false]
       }
     }
   },
