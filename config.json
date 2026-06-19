@@ -1,0 +1,168 @@
+{
+  "app_store_list": [
+    ["币安 HK", "1436799971", "hk"],
+    ["欧易 HK", "1327268470", "hk"],
+    ["PokePay HK", "6741506101", "hk"],
+    ["PixEz TW", "1494435126", "tw"],
+    ["Bybit US", "1488296980", "us"],
+    ["Bitget Wallet US", "1395301115", "us"],
+    ["Ready US", "1358741926", "us"],
+    ["Loon US", "1373567447", "us"],
+    ["Telegram US", "686449807", "us"],
+    ["N26 DE", "956857223", "de"],
+    ["Fate/Grand Order JP", "1015521325", "jp"],
+    ["BanG Dream JP", "1195834442", "jp"],
+    ["Project Sekai JP", "1489932710", "jp"],
+    ["IDOLY PRIDE JP", "1535925293", "jp"],
+    ["NIKKE KR", "1585915174", "kr"]
+  ],
+  "google_play_list": [
+    ["Fate/Grand Order JP", "com.aniplex.fategrandorder", "jp"],
+    ["Fate/Grand Order TW", "com.xiaomeng.fategrandorder", "tw"],
+    ["Fate/Grand Order US", "com.aniplex.fategrandorder.en", "us"],
+    ["碧蓝航线 JP", "com.YoStarJP.AzurLane", "jp"],
+    ["碧蓝航线 US", "com.YoStarEN.AzurLane", "us"],
+    ["碧蓝航线 TW", "com.hkmanjuu.azurlane.gp", "tw"]
+  ],
+  "taptap_list": [
+    ["Fate/Grand Order CN", "12982"],
+    ["碧蓝航线 CN", "31597"]
+  ],
+  "github_repo_list": [
+    ["JMBQ悬浮窗", "JMBQ/azurlane"]
+  ],
+  "rss_list": [
+    ["能帮我弄干净吗？", "https://mikanani.me/RSS/Bangumi?bangumiId=3826"],
+    ["非人学生与厌世教师", "https://mikanani.me/RSS/Bangumi?bangumiId=3845"],
+    ["金牌得主-第2季", "https://mikanani.me/RSS/Bangumi?bangumiId=3822"],
+    ["皎洁迎宵之月", "https://mikanani.me/RSS/Bangumi?bangumiId=3859"]
+  ],
+  "build_number_check": {
+    "global": {
+      "App Store": false,
+      "Google Play": false,
+      "TapTap": false,
+      "GitHub": false,
+      "RSS": true
+    },
+    "groups": {
+      "GitHub项目更新": {
+        "GitHub": false
+      }
+    },
+    "apps": {
+      "NIKKE KR": {
+        "App Store": true
+      }
+    }
+  },
+  "rss_regex_rules": {
+    "能帮我弄干净吗？": "黑白字幕组.*1080.*简日内嵌",
+    "非人学生与厌世教师": "桜都字幕组.*1080.*简体内嵌",
+    "金牌得主-第2季": "绿茶字幕组.*1080.*简日内嵌",
+    "皎洁迎宵之月": "六四位元字幕组.*1080.*繁体中文"
+  },
+  "suffix_config": {
+    "global": {
+      "App Store": ["iOS", true],
+      "Google Play": ["Android", true],
+      "TapTap": ["Android", true],
+      "GitHub": ["GitHub", true],
+      "RSS": ["RSS", false]
+    },
+    "groups": {
+      "应用更新": {
+        "App Store": ["iOS", false]
+      },
+      "GitHub项目更新": {
+        "GitHub": ["GitHub", false]
+      }
+    },
+    "apps": {
+      "Loon US": {
+        "App Store": ["iOS", false]
+      }
+    }
+  },
+  "notification_groups": {
+    "游戏更新": [
+      "碧蓝航线 CN",
+      "碧蓝航线 JP",
+      "碧蓝航线 US",
+      "碧蓝航线 TW",
+      "Fate/Grand Order JP",
+      "Fate/Grand Order CN",
+      "Fate/Grand Order TW",
+      "Fate/Grand Order US",
+      "BanG Dream JP",
+      "Project Sekai JP",
+      "IDOLY PRIDE JP",
+      "NIKKE KR"
+    ],
+    "应用更新": [
+      "币安 HK",
+      "欧易 HK",
+      "PokePay HK",
+      "PixEz TW",
+      "Bybit US",
+      "Bitget Wallet US",
+      "Ready US",
+      "Loon US",
+      "Telegram US",
+      "N26 DE"
+    ],
+    "GitHub项目更新": [
+      "JMBQ悬浮窗"
+    ],
+    "动画更新": [
+      "能帮我弄干净吗？",
+      "非人学生与厌世教师",
+      "金牌得主-第2季",
+      "皎洁迎宵之月"
+    ]
+  },
+  "default_group": "其他更新",
+  "notification_icons": {
+    "游戏更新": "https://shared.fastly.steamstatic.com/community_assets/images/items/2855140/4fd8a06b61d271c4eb71c85df79268429de46d63.gif",
+    "应用更新": "https://shared.fastly.steamstatic.com/community_assets/images/items/2861690/c6de335c0a6737e5105eef701af2d3284ab513c4.gif",
+    "GitHub项目更新": "https://shared.fastly.steamstatic.com/community_assets/images/items/2861700/db894084fbca19c3dd051cce144af2ad076f7273.gif",
+    "动画更新": "https://shared.fastly.steamstatic.com/community_assets/images/items/2861720/0f9367f89fad6b92c96b686442d61bcb86d627f5.gif"
+  },
+  "default_icon": "https://shared.fastly.steamstatic.com/community_assets/images/items/2861720/eca5871ca45838af8c953be846ab495d198dad19.png",
+  "rich_media_config": {
+    "碧蓝航线 CN": "https://261213.xyz/AzurLane.png",
+    "碧蓝航线 JP": "https://261213.xyz/AzurLane.png",
+    "碧蓝航线 US": "https://261213.xyz/AzurLane.png",
+    "碧蓝航线 TW": "https://261213.xyz/AzurLane.png",
+    "Fate/Grand Order JP": "https://261213.xyz/FateGrandOrder.png",
+    "Fate/Grand Order CN": "https://261213.xyz/FateGrandOrder.png",
+    "Fate/Grand Order TW": "https://261213.xyz/FateGrandOrder.png",
+    "Fate/Grand Order US": "https://261213.xyz/FateGrandOrder.png",
+    "BanG Dream JP": "https://261213.xyz/BanGDream.png",
+    "IDOLY PRIDE JP": "https://261213.xyz/IDOLYPRIDE.png",
+    "Project Sekai JP": "https://261213.xyz/ProjectSekai.png",
+    "NIKKE KR": "https://261213.xyz/NIKKE.png",
+    "币安 HK": "https://261213.xyz/Binance.png",
+    "欧易 HK": "https://261213.xyz/OKX.png",
+    "PokePay HK": "https://261213.xyz/PokePay.png",
+    "PixEz TW": "https://261213.xyz/PixEz.png",
+    "Bybit US": "https://261213.xyz/Bybit.png",
+    "Bitget Wallet US": "https://261213.xyz/Bitget%20Wallet.png",
+    "Ready US": "https://261213.xyz/Ready.png",
+    "Loon US": "https://261213.xyz/Loon.png",
+    "Telegram US": "https://261213.xyz/Telegram.png",
+    "N26 DE": "https://261213.xyz/N26.png",
+    "JMBQ悬浮窗": "https://261213.xyz/JMBQ.PNG",
+    "能帮我弄干净吗？": "https://image.tmdb.org/t/p/w1280/1pRDbev2ITZCqHgow2pDvj4AEBP.jpg",
+    "非人学生与厌世教师": "https://image.tmdb.org/t/p/w1280/1GmD3pP3aCQAknNem6yaQ5gP5os.jpg",
+    "金牌得主-第2季": "https://image.tmdb.org/t/p/w1280/uvyh5dyGpXktH8Liq8eFhm7L9Ix.jpg",
+    "皎洁迎宵之月": "https://image.tmdb.org/t/p/w1280/3061lEeTTSb5NtX0ASXnRSO7Mo5.jpg"
+  },
+  "bark_archive_mapping": {
+    "游戏更新": "🎮 Game",
+    "应用更新": "📱 App",
+    "GitHub项目更新": "🛠️ GitHub",
+    "动画更新": "📺 Anime",
+    "其他更新": "🔔 Other"
+  }
+}
