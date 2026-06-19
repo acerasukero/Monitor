@@ -1,0 +1,1527 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monitor</title>
+  <link id="favicon" rel="icon" href="">
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --sidebar: #eef1eb;
+      --panel: #ffffff;
+      --line: #d9ded6;
+      --line-strong: #b7c0b3;
+      --text: #1f2a24;
+      --muted: #66736b;
+      --accent: #0f766e;
+      --accent-soft: #d9f0ec;
+      --warn: #b45309;
+      --danger: #b42318;
+      --danger-soft: #fbe4e2;
+      --ok: #16774b;
+      --shadow: 0 10px 30px rgba(32, 42, 36, 0.08);
+      font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button {
+      min-height: 36px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.danger { background: var(--danger-soft); border-color: #f0aaa3; color: var(--danger); }
+    button.icon { width: 36px; padding: 0; }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      padding: 7px 9px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 520px;
+      resize: vertical;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      line-height: 1.45;
+      white-space: pre;
+    }
+
+    input[type="checkbox"] {
+      width: 16px;
+      min-height: 16px;
+      padding: 0;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 18px;
+      background: color-mix(in srgb, var(--bg) 92%, white);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      background: #22352c;
+      color: #fff;
+      font-weight: 800;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 58vw;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      min-height: 0;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      padding: 16px;
+      background: var(--sidebar);
+      display: grid;
+      align-content: start;
+      gap: 16px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav button {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 10px;
+      border-color: transparent;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .nav button.active {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .sidepanel {
+      display: grid;
+      gap: 8px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .sidepanel h2 {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    .content {
+      min-width: 0;
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .panel {
+      min-width: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .panel-body {
+      padding: 12px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      min-height: 74px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .tools {
+      display: grid;
+      grid-template-columns: 150px 150px minmax(180px, 1fr);
+      gap: 8px;
+      width: min(620px, 100%);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 10px;
+      align-items: end;
+    }
+
+    .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: 1 / -1; }
+
+    .source-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 58vh;
+    }
+
+    table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f9faf8;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    td.tight { width: 44px; }
+
+    .checks {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .status {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--muted);
+      background: #fff;
+    }
+
+    .status.ok { border-color: #a7d6bf; color: var(--ok); background: #effaf4; }
+    .status.error { border-color: #f0aaa3; color: var(--danger); background: var(--danger-soft); }
+    .status.warn { border-color: #f2c27b; color: var(--warn); background: #fff7e8; }
+
+    .messages {
+      display: grid;
+      gap: 8px;
+      max-height: calc(100vh - 260px);
+      overflow: auto;
+    }
+
+    .messages ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .group-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .group-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(260px, 2fr) minmax(180px, 1.1fr) 44px;
+      gap: 10px;
+      align-items: end;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .default-group-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(260px, 2fr) minmax(180px, 1.1fr) 44px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .rule-block {
+      display: grid;
+      gap: 12px;
+    }
+
+    .rule-section {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .rule-section h3 {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .rule-grid {
+      display: grid;
+      grid-template-columns: 120px 110px minmax(120px, 1fr) 120px 110px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .rule-grid.header {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .setting-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 10px;
+      align-items: end;
+    }
+
+    .color-input {
+      min-height: 36px;
+      padding: 4px;
+    }
+
+    .json-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 1060px) {
+      .topbar { grid-template-columns: 1fr; }
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
+      .nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tools, .group-row, .default-group-row, .rule-grid, .setting-grid, .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .span-2, .span-3, .span-4, .span-5, .span-6, .span-7, .span-8, .span-12 {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div id="brandmark" class="mark">M</div>
+        <div>
+          <h1 id="brandname">Monitor</h1>
+          <p id="repoline">未连接</p>
+        </div>
+      </div>
+      <div class="actions">
+        <div id="status" class="status">等待加载</div>
+        <button id="loadbtn">读取</button>
+        <button id="validatebtn">校验</button>
+        <button id="savebtn" class="primary">保存</button>
+        <button id="runbtn">运行</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <nav class="nav">
+          <button data-tab="items" class="active">监控项目</button>
+          <button data-tab="groups">分组</button>
+          <button data-tab="display">显示规则</button>
+          <button data-tab="json">JSON</button>
+          <button data-tab="settings">设置</button>
+        </nav>
+
+        <section class="sidepanel">
+          <h2>校验结果</h2>
+          <div id="messages" class="messages"></div>
+        </section>
+      </aside>
+
+      <section class="content">
+        <section id="itemsTab">
+          <div class="summary" id="summary"></div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">添加监控项目</h2>
+              <div class="tools">
+                <select id="sourcefilter"></select>
+                <select id="groupfilter"></select>
+                <input id="searchinput" placeholder="搜索名称、ID、地区">
+              </div>
+            </div>
+            <div class="panel-body form-grid">
+              <label class="span-2">来源
+                <select id="newsource"></select>
+              </label>
+              <label class="span-3">名称
+                <input id="newname">
+              </label>
+              <label class="span-3" id="newtargetlabel">目标
+                <input id="newtarget">
+              </label>
+              <label class="span-2" id="newregionlabel">地区
+                <input id="newregion">
+              </label>
+              <label class="span-2">分组
+                <select id="newgroup"></select>
+              </label>
+              <label class="span-5" id="newregexlabel">RSS 正则
+                <input id="newregex">
+              </label>
+              <label class="span-5">富媒体文件URL
+                <input id="newmedia">
+              </label>
+              <button id="additembtn" class="primary span-2">添加</button>
+            </div>
+          </div>
+
+          <div id="sourcelist" class="source-list"></div>
+        </section>
+
+        <section id="groupsTab" class="panel hidden">
+          <div class="panel-head">
+            <h2 class="panel-title">分组</h2>
+            <button id="addgroupbtn" class="primary">添加分组</button>
+          </div>
+          <div class="panel-body">
+            <div class="default-group-row">
+              <label>分组名称（默认）
+                <input id="defaultgroupinput">
+              </label>
+              <label>图标URL（默认）
+                <input id="defaulticoninput">
+              </label>
+              <label>Bark分组名称
+                <input id="defaultarchiveinput">
+              </label>
+              <div></div>
+            </div>
+          </div>
+          <div class="panel-body group-list" id="grouplist"></div>
+        </section>
+
+        <section id="displayTab" class="panel hidden">
+          <div class="panel-head">
+            <h2 class="panel-title">显示规则</h2>
+          </div>
+          <div id="displaygrid" class="panel-body rule-block"></div>
+        </section>
+
+        <section id="jsonTab" class="panel hidden">
+          <div class="panel-head">
+            <h2 class="panel-title">JSON</h2>
+          </div>
+          <div class="panel-body">
+            <label>config.json
+              <textarea id="jsoneditor" spellcheck="false"></textarea>
+            </label>
+            <div class="json-actions">
+              <button id="applyjsonbtn">应用 JSON</button>
+              <button id="formatjsonbtn">格式化</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="settingsTab" class="panel hidden">
+          <div class="panel-head">
+            <h2 class="panel-title">设置</h2>
+          </div>
+          <div class="panel-body setting-grid">
+            <label class="span-6">Worker URL
+              <input id="workerurl" placeholder="https://monitor-api.example.com">
+            </label>
+            <label class="span-6">WebUI Token
+              <input id="webuitoken" type="password" autocomplete="off">
+            </label>
+            <label class="span-4">页面名称
+              <input id="settingbrandname">
+            </label>
+            <label class="span-4">浏览器标题
+              <input id="settingpagetitle">
+            </label>
+            <label class="span-4">主题预设
+              <select id="settingtheme"></select>
+            </label>
+            <label class="span-6">顶部图标URL
+              <input id="settinglogourl">
+            </label>
+            <label class="span-6">标题栏图标URL
+              <input id="settingfaviconurl">
+            </label>
+            <label class="span-2">背景
+              <input id="colorbg" class="color-input" type="color">
+            </label>
+            <label class="span-2">侧边栏
+              <input id="colorsidebar" class="color-input" type="color">
+            </label>
+            <label class="span-2">面板
+              <input id="colorpanel" class="color-input" type="color">
+            </label>
+            <label class="span-2">文字
+              <input id="colortext" class="color-input" type="color">
+            </label>
+            <label class="span-2">弱文字
+              <input id="colormuted" class="color-input" type="color">
+            </label>
+            <label class="span-2">强调色
+              <input id="coloraccent" class="color-input" type="color">
+            </label>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const SOURCES = {
+      "App Store": { key: "app_store_list", target: "App ID", region: true, defaultregion: "cn" },
+      "Google Play": { key: "google_play_list", target: "包名", region: true, defaultregion: "us" },
+      "TapTap": { key: "taptap_list", target: "TapTap ID", region: false },
+      "GitHub": { key: "github_repo_list", target: "owner/repo", region: false },
+      "RSS": { key: "rss_list", target: "RSS 链接", region: false },
+    };
+    const SOURCE_NAMES = Object.keys(SOURCES);
+    const storage = window.localStorage;
+    const el = (id) => document.getElementById(id);
+
+    const THEMES = {
+      quiet: {
+        name: "清爽",
+        bg: "#f6f7f4",
+        sidebar: "#eef1eb",
+        panel: "#ffffff",
+        text: "#1f2a24",
+        muted: "#66736b",
+        accent: "#0f766e",
+      },
+      light: {
+        name: "明亮",
+        bg: "#f7f8fb",
+        sidebar: "#edf1f7",
+        panel: "#ffffff",
+        text: "#18202a",
+        muted: "#607083",
+        accent: "#2563eb",
+      },
+      graphite: {
+        name: "石墨",
+        bg: "#f3f2ef",
+        sidebar: "#e7e3dc",
+        panel: "#ffffff",
+        text: "#26231f",
+        muted: "#746d64",
+        accent: "#5f6f52",
+      },
+      custom: {
+        name: "自定义",
+        bg: "#f6f7f4",
+        sidebar: "#eef1eb",
+        panel: "#ffffff",
+        text: "#1f2a24",
+        muted: "#66736b",
+        accent: "#0f766e",
+      },
+    };
+
+    let state = {
+      config: null,
+      sha: null,
+      validation: null,
+      activeTab: "items",
+      settings: loadSettings(),
+    };
+
+    function baseConfig() {
+      return {
+        app_store_list: [],
+        google_play_list: [],
+        taptap_list: [],
+        github_repo_list: [],
+        rss_list: [],
+        build_number_check: { global: Object.fromEntries(SOURCE_NAMES.map((source) => [source, false])), groups: {}, apps: {} },
+        rss_regex_rules: {},
+        suffix_config: { global: Object.fromEntries(SOURCE_NAMES.map((source) => [source, [source, true]])), groups: {}, apps: {} },
+        notification_groups: {},
+        default_group: "其他更新",
+        notification_icons: {},
+        default_icon: "",
+        rich_media_config: {},
+        bark_archive_mapping: {},
+      };
+    }
+
+    function normalizeConfig(config) {
+      const defaults = baseConfig();
+      const normalized = { ...defaults, ...(config || {}) };
+      for (const meta of Object.values(SOURCES)) {
+        normalized[meta.key] = Array.isArray(normalized[meta.key]) ? normalized[meta.key] : [];
+      }
+      normalized.build_number_check = {
+        global: { ...defaults.build_number_check.global, ...(normalized.build_number_check?.global || {}) },
+        groups: normalized.build_number_check?.groups || {},
+        apps: normalized.build_number_check?.apps || {},
+      };
+      normalized.suffix_config = {
+        global: { ...defaults.suffix_config.global, ...(normalized.suffix_config?.global || {}) },
+        groups: normalized.suffix_config?.groups || {},
+        apps: normalized.suffix_config?.apps || {},
+      };
+      normalized.notification_groups = normalized.notification_groups || {};
+      normalized.rss_regex_rules = normalized.rss_regex_rules || {};
+      normalized.notification_icons = normalized.notification_icons || {};
+      normalized.rich_media_config = normalized.rich_media_config || {};
+      normalized.bark_archive_mapping = normalized.bark_archive_mapping || {};
+      return normalized;
+    }
+
+    function loadSettings() {
+      const raw = storage.getItem("monitor.settings");
+      const parsed = raw ? safeJson(raw, {}) : {};
+      return {
+        workerurl: storage.getItem("monitor.workerurl") || parsed.workerurl || "",
+        webuitoken: storage.getItem("monitor.webuitoken") || parsed.webuitoken || "",
+        brandname: parsed.brandname || "Monitor",
+        pagetitle: parsed.pagetitle || "Monitor",
+        logourl: parsed.logourl || "",
+        faviconurl: parsed.faviconurl || "",
+        theme: parsed.theme || "quiet",
+        colors: { ...THEMES.quiet, ...(parsed.colors || {}) },
+      };
+    }
+
+    function saveSettings() {
+      storage.setItem("monitor.settings", JSON.stringify(state.settings));
+      storage.setItem("monitor.workerurl", state.settings.workerurl || "");
+      storage.setItem("monitor.webuitoken", state.settings.webuitoken || "");
+      applySettings();
+    }
+
+    function applySettings() {
+      const settings = state.settings;
+      document.title = settings.pagetitle || "Monitor";
+      el("brandname").textContent = settings.brandname || "Monitor";
+      const favicon = el("favicon");
+      if (settings.faviconurl) {
+        favicon.href = settings.faviconurl;
+      } else {
+        favicon.removeAttribute("href");
+      }
+
+      const mark = el("brandmark");
+      if (settings.logourl) {
+        mark.innerHTML = `<img alt="" src="${escapeAttr(settings.logourl)}">`;
+      } else {
+        mark.textContent = (settings.brandname || "Monitor").trim().charAt(0).toUpperCase() || "M";
+      }
+
+      const colors = settings.colors || THEMES.quiet;
+      const root = document.documentElement;
+      root.style.setProperty("--bg", colors.bg);
+      root.style.setProperty("--sidebar", colors.sidebar);
+      root.style.setProperty("--panel", colors.panel);
+      root.style.setProperty("--text", colors.text);
+      root.style.setProperty("--muted", colors.muted);
+      root.style.setProperty("--accent", colors.accent);
+      root.style.setProperty("--accent-soft", mixHex(colors.accent, "#ffffff", 0.82));
+      fillSettingsForm();
+    }
+
+    function workerurl() {
+      return (state.settings.workerurl || "").trim().replace(/\/$/, "");
+    }
+
+    function headers() {
+      const token = (state.settings.webuitoken || "").trim();
+      return {
+        "Content-Type": "application/json",
+        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+      };
+    }
+
+    async function api(path, options = {}) {
+      const base = workerurl();
+      if (!base) {
+        throw new Error("Worker URL 为空");
+      }
+      const response = await fetch(`${base}${path}`, {
+        ...options,
+        headers: { ...headers(), ...(options.headers || {}) },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error = new Error(data.error || data.errors?.join("; ") || `HTTP ${response.status}`);
+        error.data = data;
+        throw error;
+      }
+      return data;
+    }
+
+    function setStatus(text, kind = "") {
+      const target = el("status");
+      target.textContent = text;
+      target.className = `status ${kind}`.trim();
+    }
+
+    function getGroups(includedefault = true) {
+      if (!state.config) return [];
+      const groups = Object.keys(state.config.notification_groups || {});
+      if (includedefault && state.config.default_group && !groups.includes(state.config.default_group)) {
+        groups.push(state.config.default_group);
+      }
+      return groups;
+    }
+
+    function groupOf(name) {
+      for (const [group, names] of Object.entries(state.config.notification_groups || {})) {
+        if (Array.isArray(names) && names.includes(name)) return group;
+      }
+      return state.config.default_group || "";
+    }
+
+    function setGroup(name, group) {
+      for (const names of Object.values(state.config.notification_groups || {})) {
+        const index = names.indexOf(name);
+        if (index >= 0) names.splice(index, 1);
+      }
+      if (group && group !== state.config.default_group) {
+        state.config.notification_groups[group] ||= [];
+        if (!state.config.notification_groups[group].includes(name)) {
+          state.config.notification_groups[group].push(name);
+        }
+      }
+    }
+
+    function getItems(sourcefilter = "") {
+      if (!state.config) return [];
+      return SOURCE_NAMES
+        .filter((source) => !sourcefilter || source === sourcefilter)
+        .flatMap((source) => {
+          const meta = SOURCES[source];
+          return (state.config[meta.key] || []).map((item, index) => ({
+            source,
+            meta,
+            index,
+            item,
+            name: item[0] || "",
+            target: item[1] || "",
+            region: item[2] || "",
+          }));
+        });
+    }
+
+    function renameItem(oldname, newname) {
+      if (!oldname || !newname || oldname === newname) return;
+      for (const names of Object.values(state.config.notification_groups || {})) {
+        const index = names.indexOf(oldname);
+        if (index >= 0) names[index] = newname;
+      }
+      moveKey(state.config.rich_media_config, oldname, newname);
+      moveKey(state.config.rss_regex_rules, oldname, newname);
+      moveKey(state.config.build_number_check.apps, oldname, newname);
+      moveKey(state.config.suffix_config.apps, oldname, newname);
+    }
+
+    function moveKey(object, oldkey, newkey) {
+      if (object && Object.prototype.hasOwnProperty.call(object, oldkey) && !Object.prototype.hasOwnProperty.call(object, newkey)) {
+        object[newkey] = object[oldkey];
+        delete object[oldkey];
+      }
+    }
+
+    function setItemField(ref, field, value) {
+      const item = state.config[ref.meta.key][ref.index];
+      if (field === "name") {
+        const oldname = item[0];
+        item[0] = value;
+        renameItem(oldname, value);
+      }
+      if (field === "target") item[1] = value;
+      if (field === "region" && ref.meta.region) item[2] = value;
+    }
+
+    function cleanupItem(name) {
+      for (const names of Object.values(state.config.notification_groups || {})) {
+        const index = names.indexOf(name);
+        if (index >= 0) names.splice(index, 1);
+      }
+      delete state.config.rich_media_config[name];
+      delete state.config.rss_regex_rules[name];
+      delete state.config.build_number_check.apps[name];
+      delete state.config.suffix_config.apps[name];
+    }
+
+    function render() {
+      renderSummary();
+      renderFilters();
+      renderItems();
+      renderGroups();
+      renderDisplay();
+      renderJson();
+      renderMessages();
+      renderTab();
+      applySettings();
+    }
+
+    function renderSummary() {
+      const summary = el("summary");
+      const counts = SOURCE_NAMES.map((source) => [source, state.config ? state.config[SOURCES[source].key].length : 0]);
+      summary.innerHTML = counts.map(([label, value]) => `<div class="metric"><span>${escapeHtml(label)}</span><strong>${value}</strong></div>`).join("");
+    }
+
+    function renderFilters() {
+      fillSelect(el("sourcefilter"), [["全部来源", ""], ...SOURCE_NAMES.map((source) => [source, source])], el("sourcefilter").value);
+      fillSelect(el("groupfilter"), [["全部分组", ""], ...getGroups().map((group) => [group, group])], el("groupfilter").value);
+      fillSelect(el("newsource"), SOURCE_NAMES.map((source) => [source, source]), el("newsource").value || "App Store");
+      fillSelect(el("newgroup"), getGroups().map((group) => [group, group]), el("newgroup").value || state.config?.default_group || "");
+      syncNewSourceFields();
+    }
+
+    function renderItems() {
+      const container = el("sourcelist");
+      if (!state.config) {
+        container.innerHTML = "";
+        return;
+      }
+      const sourcefilter = el("sourcefilter").value;
+      const groupfilter = el("groupfilter").value;
+      const query = el("searchinput").value.trim().toLowerCase();
+
+      container.innerHTML = SOURCE_NAMES
+        .filter((source) => !sourcefilter || source === sourcefilter)
+        .map((source) => {
+          const refs = getItems(source).filter((ref) => {
+            const haystack = [ref.source, ref.name, ref.target, ref.region, groupOf(ref.name)].join(" ").toLowerCase();
+            return (!groupfilter || groupOf(ref.name) === groupfilter) && (!query || haystack.includes(query));
+          });
+          if (!refs.length) return "";
+          return renderSourceTable(source, refs);
+        }).join("");
+
+      container.querySelectorAll("[data-edit]").forEach((node) => {
+        node.addEventListener("change", () => {
+          const ref = resolveItemRef(node);
+          if (!ref) return;
+          const field = node.dataset.field;
+          if (field === "group") setGroup(ref.name, node.value);
+          if (field === "regex") state.config.rss_regex_rules[ref.name] = node.value.trim();
+          if (field === "media") state.config.rich_media_config[ref.name] = node.value.trim();
+          if (field === "build") setAppBuild(ref.name, ref.source, node.checked);
+          if (["name", "target", "region"].includes(field)) setItemField(ref, field, node.value.trim());
+          render();
+        });
+      });
+
+      container.querySelectorAll("[data-delete]").forEach((node) => {
+        node.addEventListener("click", () => {
+          const ref = resolveItemRef(node);
+          if (!ref) return;
+          state.config[ref.meta.key].splice(ref.index, 1);
+          cleanupItem(ref.name);
+          render();
+        });
+      });
+    }
+
+    function renderSourceTable(source, refs) {
+      const meta = SOURCES[source];
+      const isrss = source === "RSS";
+      const regionth = meta.region ? "<th>地区</th>" : "";
+      const regexth = isrss ? "<th>RSS 正则</th>" : "";
+      return `
+        <section class="panel">
+          <div class="panel-head">
+            <h2 class="panel-title">${escapeHtml(source)}</h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>名称</th>
+                  <th>${escapeHtml(meta.target)}</th>
+                  ${regionth}
+                  <th>分组</th>
+                  ${regexth}
+                  <th>富媒体文件URL</th>
+                  <th>项目级构建号</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${refs.map((ref) => renderItemRow(ref)).join("")}
+              </tbody>
+            </table>
+          </div>
+        </section>`;
+    }
+
+    function renderItemRow(ref) {
+      const group = groupOf(ref.name);
+      const regex = state.config.rss_regex_rules[ref.name] || "";
+      const media = state.config.rich_media_config[ref.name] || "";
+      const build = state.config.build_number_check.apps?.[ref.name]?.[ref.source] || false;
+      const regiontd = ref.meta.region ? `<td><input data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="region" value="${escapeAttr(ref.region)}"></td>` : "";
+      const regextd = ref.source === "RSS" ? `<td><input data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="regex" value="${escapeAttr(regex)}"></td>` : "";
+      return `
+        <tr>
+          <td><input data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="name" value="${escapeAttr(ref.name)}"></td>
+          <td><input data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="target" value="${escapeAttr(ref.target)}"></td>
+          ${regiontd}
+          <td><select data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="group">${getGroups().map((item) => `<option value="${escapeAttr(item)}" ${item === group ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}</select></td>
+          ${regextd}
+          <td><input data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="media" value="${escapeAttr(media)}"></td>
+          <td><label class="checks"><input type="checkbox" data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="build" ${build ? "checked" : ""}>保留</label></td>
+          <td class="tight"><button class="icon danger" data-delete data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" title="删除">×</button></td>
+        </tr>`;
+    }
+
+    function resolveItemRef(node) {
+      const source = node.dataset.source;
+      const index = Number(node.dataset.index);
+      const meta = SOURCES[source];
+      const item = state.config?.[meta?.key]?.[index];
+      if (!meta || !item) return null;
+      return { source, meta, index, item, name: item[0] || "", target: item[1] || "", region: item[2] || "" };
+    }
+
+    function setAppBuild(name, source, checked) {
+      state.config.build_number_check.apps[name] ||= {};
+      state.config.build_number_check.apps[name][source] = checked;
+    }
+
+    function renderGroups() {
+      if (!state.config) return;
+      el("defaultgroupinput").value = state.config.default_group || "";
+      el("defaulticoninput").value = state.config.default_icon || "";
+      el("defaultarchiveinput").value = state.config.bark_archive_mapping[state.config.default_group] || "";
+
+      const list = el("grouplist");
+      list.innerHTML = Object.keys(state.config.notification_groups || {}).map((group) => `
+        <div class="group-row" data-group="${escapeAttr(group)}">
+          <label>分组名称
+            <input data-group-field="name" value="${escapeAttr(group)}">
+          </label>
+          <label>图标URL
+            <input data-group-field="icon" value="${escapeAttr(state.config.notification_icons[group] || "")}">
+          </label>
+          <label>Bark分组名称
+            <input data-group-field="archive" value="${escapeAttr(state.config.bark_archive_mapping[group] || "")}">
+          </label>
+          <button class="icon danger" data-delete-group="${escapeAttr(group)}" title="删除">×</button>
+        </div>`).join("");
+
+      list.querySelectorAll("[data-group-field]").forEach((node) => {
+        node.addEventListener("change", () => {
+          const oldgroup = node.closest("[data-group]").dataset.group;
+          if (node.dataset.groupField === "name") renameGroup(oldgroup, node.value.trim());
+          if (node.dataset.groupField === "icon") state.config.notification_icons[oldgroup] = node.value.trim();
+          if (node.dataset.groupField === "archive") state.config.bark_archive_mapping[oldgroup] = node.value.trim();
+          render();
+        });
+      });
+
+      list.querySelectorAll("[data-delete-group]").forEach((node) => {
+        node.addEventListener("click", () => {
+          const group = node.dataset.deleteGroup;
+          delete state.config.notification_groups[group];
+          delete state.config.notification_icons[group];
+          delete state.config.bark_archive_mapping[group];
+          delete state.config.build_number_check.groups[group];
+          delete state.config.suffix_config.groups[group];
+          render();
+        });
+      });
+    }
+
+    function renameGroup(oldgroup, newgroup) {
+      if (!oldgroup || !newgroup || oldgroup === newgroup) return;
+      state.config.notification_groups[newgroup] = state.config.notification_groups[oldgroup] || [];
+      delete state.config.notification_groups[oldgroup];
+      moveKey(state.config.notification_icons, oldgroup, newgroup);
+      moveKey(state.config.bark_archive_mapping, oldgroup, newgroup);
+      moveKey(state.config.build_number_check.groups, oldgroup, newgroup);
+      moveKey(state.config.suffix_config.groups, oldgroup, newgroup);
+    }
+
+    function renderDisplay() {
+      if (!state.config) return;
+      el("displaygrid").innerHTML = `
+        ${renderGlobalRules()}
+        ${renderGroupRules()}
+        ${renderAppRules()}
+      `;
+      bindDisplayRules();
+    }
+
+    function renderGlobalRules() {
+      return `
+        <section class="rule-section">
+          <h3>全局规则</h3>
+          ${ruleHeader(false)}
+          ${SOURCE_NAMES.map((source) => {
+            const suffix = state.config.suffix_config.global[source] || [source, true];
+            const build = Boolean(state.config.build_number_check.global[source]);
+            return ruleRow({ level: "global", owner: "global", source, suffix, build, suffixenabled: true, buildenabled: true, fixed: true });
+          }).join("")}
+        </section>`;
+    }
+
+    function renderGroupRules() {
+      const groups = getGroups(false);
+      return `
+        <section class="rule-section">
+          <h3>分组级规则</h3>
+          ${groups.length ? groups.map((group) => `
+            <div class="rule-section">
+              <h3>${escapeHtml(group)}</h3>
+              ${ruleHeader(true)}
+              ${SOURCE_NAMES.map((source) => {
+                const suffixenabled = Boolean(state.config.suffix_config.groups[group]?.[source]);
+                const buildenabled = state.config.build_number_check.groups[group]?.[source] !== undefined;
+                const suffix = state.config.suffix_config.groups[group]?.[source] || ["", true];
+                const build = Boolean(state.config.build_number_check.groups[group]?.[source]);
+                return ruleRow({ level: "group", owner: group, source, suffix, build, suffixenabled, buildenabled });
+              }).join("")}
+            </div>`).join("") : "<div class=\"status\">暂无分组</div>"}
+        </section>`;
+    }
+
+    function renderAppRules() {
+      const items = getItems();
+      return `
+        <section class="rule-section">
+          <h3>项目级规则</h3>
+          ${items.length ? items.map((item) => `
+            <div class="rule-section">
+              <h3>${escapeHtml(item.name)} · ${escapeHtml(item.source)}</h3>
+              ${ruleHeader(true)}
+              ${(() => {
+                const suffixenabled = Boolean(state.config.suffix_config.apps[item.name]?.[item.source]);
+                const buildenabled = state.config.build_number_check.apps[item.name]?.[item.source] !== undefined;
+                const suffix = state.config.suffix_config.apps[item.name]?.[item.source] || ["", true];
+                const build = Boolean(state.config.build_number_check.apps[item.name]?.[item.source]);
+                return ruleRow({ level: "app", owner: item.name, source: item.source, suffix, build, suffixenabled, buildenabled });
+              })()}
+            </div>`).join("") : "<div class=\"status\">暂无监控项目</div>"}
+        </section>`;
+    }
+
+    function ruleHeader(override) {
+      return `
+        <div class="rule-grid header">
+          <div>来源</div>
+          <div>${override ? "后缀覆盖" : "后缀"}</div>
+          <div>后缀文本</div>
+          <div>显示后缀</div>
+          <div>${override ? "构建号覆盖" : "保留构建号"}</div>
+        </div>`;
+    }
+
+    function ruleRow(data) {
+      return `
+        <div class="rule-grid">
+          <div>${escapeHtml(data.source)}</div>
+          <label class="checks"><input type="checkbox" data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixenabled" ${data.suffixenabled ? "checked" : ""} ${data.fixed ? "disabled" : ""}>启用</label>
+          <input data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixtext" value="${escapeAttr(data.suffix[0] || "")}" ${data.suffixenabled ? "" : "disabled"}>
+          <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixvisible" ${data.suffixenabled ? "" : "disabled"}>
+            <option value="true" ${data.suffix[1] ? "selected" : ""}>是</option>
+            <option value="false" ${!data.suffix[1] ? "selected" : ""}>否</option>
+          </select>
+          <label class="checks"><input type="checkbox" data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="build" ${data.build ? "checked" : ""} ${!data.fixed && !data.buildenabled ? "disabled" : ""}>保留</label>
+        </div>
+        ${data.fixed ? "" : `
+        <div class="rule-grid">
+          <div></div><div></div><div></div><div></div>
+          <label class="checks"><input type="checkbox" data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="buildenabled" ${data.buildenabled ? "checked" : ""}>启用构建号覆盖</label>
+        </div>`}`;
+    }
+
+    function bindDisplayRules() {
+      el("displaygrid").querySelectorAll("[data-rule]").forEach((node) => {
+        node.addEventListener("change", () => {
+          updateRule(node);
+          renderDisplay();
+          renderJson();
+        });
+      });
+    }
+
+    function updateRule(node) {
+      const level = node.dataset.level;
+      const owner = node.dataset.owner;
+      const source = node.dataset.source;
+      const field = node.dataset.field;
+      const suffixroot = level === "global" ? state.config.suffix_config.global : ensureNested(state.config.suffix_config, level, owner);
+      const buildroot = level === "global" ? state.config.build_number_check.global : ensureNested(state.config.build_number_check, level, owner);
+
+      if (field === "suffixenabled") {
+        if (node.checked) suffixroot[source] = suffixroot[source] || ["", true];
+        else delete suffixroot[source];
+      }
+      if (field === "suffixtext") {
+        suffixroot[source] = suffixroot[source] || ["", true];
+        suffixroot[source][0] = node.value;
+      }
+      if (field === "suffixvisible") {
+        suffixroot[source] = suffixroot[source] || ["", true];
+        suffixroot[source][1] = node.value === "true";
+      }
+      if (field === "buildenabled") {
+        if (node.checked) buildroot[source] = Boolean(buildroot[source]);
+        else delete buildroot[source];
+      }
+      if (field === "build") {
+        if (level === "global" || buildroot[source] !== undefined) {
+          buildroot[source] = node.checked;
+        }
+      }
+    }
+
+    function ensureNested(root, level, owner) {
+      const bucket = level === "group" ? "groups" : "apps";
+      root[bucket] ||= {};
+      root[bucket][owner] ||= {};
+      return root[bucket][owner];
+    }
+
+    function renderJson() {
+      if (!state.config) return;
+      const editor = el("jsoneditor");
+      if (document.activeElement !== editor) {
+        editor.value = JSON.stringify(state.config, null, 2);
+      }
+    }
+
+    function renderMessages() {
+      const box = el("messages");
+      const validation = state.validation;
+      if (!validation) {
+        box.innerHTML = "<div class=\"status\">暂无校验结果</div>";
+        return;
+      }
+      const errors = validation.errors || [];
+      const warnings = validation.warnings || [];
+      const errorhtml = errors.length ? `<div class="status error">错误 ${errors.length}</div><ul>${errors.map((msg) => `<li>${escapeHtml(msg)}</li>`).join("")}</ul>` : "<div class=\"status ok\">无错误</div>";
+      const warnhtml = warnings.length ? `<div class="status warn">警告 ${warnings.length}</div><ul>${warnings.map((msg) => `<li>${escapeHtml(msg)}</li>`).join("")}</ul>` : "<div class=\"status ok\">无警告</div>";
+      box.innerHTML = errorhtml + warnhtml;
+    }
+
+    function renderTab() {
+      for (const name of ["items", "groups", "display", "json", "settings"]) {
+        el(`${name}Tab`).classList.toggle("hidden", state.activeTab !== name);
+        document.querySelector(`[data-tab="${name}"]`).classList.toggle("active", state.activeTab === name);
+      }
+    }
+
+    function fillSettingsForm() {
+      if (!el("workerurl")) return;
+      el("workerurl").value = state.settings.workerurl || "";
+      el("webuitoken").value = state.settings.webuitoken || "";
+      el("settingbrandname").value = state.settings.brandname || "Monitor";
+      el("settingpagetitle").value = state.settings.pagetitle || "Monitor";
+      el("settinglogourl").value = state.settings.logourl || "";
+      el("settingfaviconurl").value = state.settings.faviconurl || "";
+      fillSelect(el("settingtheme"), Object.entries(THEMES).map(([key, theme]) => [theme.name, key]), state.settings.theme);
+      el("colorbg").value = state.settings.colors.bg;
+      el("colorsidebar").value = state.settings.colors.sidebar;
+      el("colorpanel").value = state.settings.colors.panel;
+      el("colortext").value = state.settings.colors.text;
+      el("colormuted").value = state.settings.colors.muted;
+      el("coloraccent").value = state.settings.colors.accent;
+    }
+
+    function fillSelect(select, options, value) {
+      const current = value ?? select.value;
+      select.innerHTML = options.map(([label, val]) => `<option value="${escapeAttr(val)}" ${String(val) === String(current) ? "selected" : ""}>${escapeHtml(label)}</option>`).join("");
+    }
+
+    function syncNewSourceFields() {
+      const source = el("newsource").value || "App Store";
+      const meta = SOURCES[source];
+      el("newtargetlabel").firstChild.textContent = `${meta.target}\n`;
+      el("newregionlabel").classList.toggle("hidden", !meta.region);
+      el("newregexlabel").classList.toggle("hidden", source !== "RSS");
+      if (meta.region && !el("newregion").value) el("newregion").value = meta.defaultregion || "";
+    }
+
+    function addItem() {
+      const source = el("newsource").value;
+      const meta = SOURCES[source];
+      const name = el("newname").value.trim();
+      const target = el("newtarget").value.trim();
+      const region = el("newregion").value.trim() || meta.defaultregion || "";
+      if (!name || !target) {
+        setStatus("名称和目标不能为空", "error");
+        return;
+      }
+      state.config[meta.key].push(meta.region ? [name, target, region] : [name, target]);
+      setGroup(name, el("newgroup").value);
+      const regex = el("newregex").value.trim();
+      const media = el("newmedia").value.trim();
+      if (source === "RSS" && regex) state.config.rss_regex_rules[name] = regex;
+      if (media) state.config.rich_media_config[name] = media;
+      el("newname").value = "";
+      el("newtarget").value = "";
+      el("newregex").value = "";
+      el("newmedia").value = "";
+      render();
+      setStatus("已添加", "ok");
+    }
+
+    async function loadConfig() {
+      saveSettings();
+      setStatus("读取中");
+      const data = await api("/api/config");
+      state.config = normalizeConfig(data.config);
+      state.sha = data.sha;
+      state.validation = data.validation;
+      el("repoline").textContent = `${data.path || "config.json"} @ ${data.branch || "main"}`;
+      render();
+      setStatus(data.ok ? "已读取" : "配置有错误", data.ok ? "ok" : "error");
+    }
+
+    async function validateConfigRemote() {
+      saveSettings();
+      syncJsonToState();
+      setStatus("校验中");
+      let data;
+      try {
+        data = await api("/api/config/validate", {
+          method: "POST",
+          body: JSON.stringify({ config: state.config }),
+        });
+      } catch (error) {
+        if (error.data?.errors || error.data?.warnings) data = error.data;
+        else throw error;
+      }
+      state.validation = data;
+      renderMessages();
+      setStatus(data.ok ? "校验通过" : "校验失败", data.ok ? "ok" : "error");
+      return data.ok;
+    }
+
+    async function saveConfig() {
+      saveSettings();
+      syncJsonToState();
+      setStatus("保存中");
+      const data = await api("/api/config", {
+        method: "PUT",
+        body: JSON.stringify({ config: state.config, message: "Update monitor config from WebUI" }),
+      });
+      state.validation = data.validation;
+      renderMessages();
+      setStatus("已保存", "ok");
+    }
+
+    async function runWorkflow() {
+      saveSettings();
+      setStatus("触发中");
+      const data = await api("/api/run", { method: "POST", body: "{}" });
+      setStatus(`已触发 ${data.workflow}`, "ok");
+    }
+
+    function syncJsonToState() {
+      if (state.activeTab !== "json") return;
+      state.config = normalizeConfig(JSON.parse(el("jsoneditor").value));
+    }
+
+    function bindEvents() {
+      state.config = normalizeConfig(null);
+      applySettings();
+
+      document.querySelectorAll("[data-tab]").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (state.activeTab === "json") syncJsonToState();
+          state.activeTab = button.dataset.tab;
+          render();
+        });
+      });
+
+      el("loadbtn").addEventListener("click", () => loadConfig().catch((error) => setStatus(error.message, "error")));
+      el("validatebtn").addEventListener("click", () => validateConfigRemote().catch((error) => setStatus(error.message, "error")));
+      el("savebtn").addEventListener("click", () => saveConfig().catch((error) => {
+        if (error.data?.errors || error.data?.warnings) {
+          state.validation = error.data;
+          renderMessages();
+        }
+        setStatus(error.message, "error");
+      }));
+      el("runbtn").addEventListener("click", () => runWorkflow().catch((error) => setStatus(error.message, "error")));
+
+      el("additembtn").addEventListener("click", addItem);
+      el("newsource").addEventListener("change", syncNewSourceFields);
+      el("sourcefilter").addEventListener("change", renderItems);
+      el("groupfilter").addEventListener("change", renderItems);
+      el("searchinput").addEventListener("input", renderItems);
+
+      el("defaultgroupinput").addEventListener("change", () => {
+        const olddefault = state.config.default_group;
+        const next = el("defaultgroupinput").value.trim();
+        if (olddefault && state.config.bark_archive_mapping[olddefault] && olddefault !== next) {
+          state.config.bark_archive_mapping[next] = state.config.bark_archive_mapping[olddefault];
+          delete state.config.bark_archive_mapping[olddefault];
+        }
+        state.config.default_group = next;
+        render();
+      });
+      el("defaulticoninput").addEventListener("change", () => {
+        state.config.default_icon = el("defaulticoninput").value.trim();
+        renderJson();
+      });
+      el("defaultarchiveinput").addEventListener("change", () => {
+        if (state.config.default_group) state.config.bark_archive_mapping[state.config.default_group] = el("defaultarchiveinput").value.trim();
+        renderJson();
+      });
+      el("addgroupbtn").addEventListener("click", () => {
+        let base = "新分组";
+        let name = base;
+        let count = 2;
+        while (state.config.notification_groups[name]) name = `${base}${count++}`;
+        state.config.notification_groups[name] = [];
+        state.config.notification_icons[name] = "";
+        state.config.bark_archive_mapping[name] = name;
+        render();
+      });
+
+      el("applyjsonbtn").addEventListener("click", () => {
+        try {
+          syncJsonToState();
+          render();
+          setStatus("JSON 已应用", "ok");
+        } catch (error) {
+          setStatus(error.message, "error");
+        }
+      });
+      el("formatjsonbtn").addEventListener("click", () => {
+        try {
+          syncJsonToState();
+          renderJson();
+          setStatus("已格式化", "ok");
+        } catch (error) {
+          setStatus(error.message, "error");
+        }
+      });
+
+      bindSettingsEvents();
+      render();
+    }
+
+    function bindSettingsEvents() {
+      const map = {
+        workerurl: "workerurl",
+        webuitoken: "webuitoken",
+        settingbrandname: "brandname",
+        settingpagetitle: "pagetitle",
+        settinglogourl: "logourl",
+        settingfaviconurl: "faviconurl",
+      };
+      for (const [id, key] of Object.entries(map)) {
+        el(id).addEventListener("input", () => {
+          state.settings[key] = el(id).value.trim();
+          saveSettings();
+        });
+      }
+      el("settingtheme").addEventListener("change", () => {
+        const theme = el("settingtheme").value;
+        state.settings.theme = theme;
+        if (theme !== "custom") state.settings.colors = { ...THEMES[theme] };
+        saveSettings();
+      });
+      for (const [id, key] of Object.entries({
+        colorbg: "bg",
+        colorsidebar: "sidebar",
+        colorpanel: "panel",
+        colortext: "text",
+        colormuted: "muted",
+        coloraccent: "accent",
+      })) {
+        el(id).addEventListener("input", () => {
+          state.settings.theme = "custom";
+          state.settings.colors[key] = el(id).value;
+          saveSettings();
+        });
+      }
+    }
+
+    function safeJson(raw, fallback) {
+      try { return JSON.parse(raw); } catch { return fallback; }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
+
+    function mixHex(a, b, amount) {
+      const pa = parseHex(a);
+      const pb = parseHex(b);
+      if (!pa || !pb) return "#d9f0ec";
+      const c = pa.map((part, index) => Math.round(part * (1 - amount) + pb[index] * amount));
+      return `#${c.map((part) => part.toString(16).padStart(2, "0")).join("")}`;
+    }
+
+    function parseHex(value) {
+      const match = /^#?([0-9a-f]{6})$/i.exec(value || "");
+      if (!match) return null;
+      return [0, 2, 4].map((offset) => parseInt(match[1].slice(offset, offset + 2), 16));
+    }
+
+    bindEvents();
+  </script>
+</body>
+</html>
