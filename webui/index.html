@@ -108,6 +108,42 @@
       backdrop-filter: blur(14px);
     }
 
+    .toast-host {
+      position: fixed;
+      top: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: grid;
+      gap: 8px;
+      width: min(560px, calc(100vw - 28px));
+      pointer-events: none;
+    }
+
+    .toast {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 42px;
+      padding: 9px 10px 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      pointer-events: auto;
+    }
+
+    .toast.ok { border-color: #a7d6bf; color: var(--ok); background: #effaf4; }
+    .toast.error { border-color: #f0aaa3; color: var(--danger); background: var(--danger-soft); }
+    .toast.warn { border-color: #f2c27b; color: var(--warn); background: #fff7e8; }
+
+    .toast button {
+      min-height: 28px;
+      width: 28px;
+      padding: 0;
+    }
+
     .brand {
       display: flex;
       align-items: center;
@@ -225,6 +261,21 @@
     .run-status a {
       color: var(--accent);
       word-break: break-all;
+    }
+
+    .failure-summary {
+      display: grid;
+      gap: 4px;
+      padding: 8px 10px;
+      border: 1px solid #f0aaa3;
+      border-radius: 6px;
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .failed-step {
+      color: var(--danger);
+      font-weight: 750;
     }
 
     .content {
@@ -525,6 +576,7 @@
   </style>
 </head>
 <body>
+  <div id="toasthost" class="toast-host"></div>
   <div class="app">
     <header class="topbar">
       <div class="brand">
@@ -537,8 +589,6 @@
       <div class="actions">
         <div id="status" class="status">等待加载</div>
         <div id="topactions" class="top-actions">
-          <button id="loadbtn">读取</button>
-          <button id="validatebtn">校验</button>
           <button id="undobtn">撤销</button>
           <button id="savebtn" class="primary">保存</button>
           <button id="runbtn">运行</button>
@@ -689,6 +739,9 @@
             <label class="span-4">主题预设
               <select id="settingtheme"></select>
             </label>
+            <label class="span-4">时间显示时区
+              <select id="settingtimezone"></select>
+            </label>
             <label class="span-6">顶部图标URL
               <div class="upload-field">
                 <input id="settinglogourl">
@@ -736,6 +789,7 @@
     const SOURCE_NAMES = Object.keys(SOURCES);
     const storage = window.localStorage;
     const el = (id) => document.getElementById(id);
+    const TIMEZONES = getSupportedTimezones();
 
     const THEMES = {
       quiet: {
@@ -788,6 +842,7 @@
       validateTimer: null,
       validating: false,
       runTimer: null,
+      loadRetryTimer: null,
     };
 
     function baseConfig() {
@@ -843,6 +898,7 @@
         pagetitle: parsed.pagetitle || "Monitor",
         logourl: parsed.logourl || "",
         faviconurl: parsed.faviconurl || "",
+        timezone: parsed.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Hong_Kong",
         theme: parsed.theme || "quiet",
         colors: { ...THEMES.quiet, ...(parsed.colors || {}) },
       };
@@ -925,6 +981,26 @@
       const target = el("status");
       target.textContent = text;
       target.className = `status ${kind}`.trim();
+    }
+
+    function setRetryStatus(text) {
+      const target = el("status");
+      target.className = "status error";
+      target.innerHTML = `${escapeHtml(text)} <button id="retryloadbtn" type="button">重试</button>`;
+      el("retryloadbtn").addEventListener("click", () => {
+        loadConfigWithRetry({ force: true }).catch((error) => setRetryStatus(error.message));
+      });
+    }
+
+    function showToast(message, kind = "ok", timeout = 3000) {
+      const host = el("toasthost");
+      const toast = document.createElement("div");
+      toast.className = `toast ${kind}`.trim();
+      toast.innerHTML = `<div>${escapeHtml(message)}</div><button type="button" title="关闭">×</button>`;
+      const close = () => toast.remove();
+      toast.querySelector("button").addEventListener("click", close);
+      host.appendChild(toast);
+      window.setTimeout(close, timeout);
     }
 
     function configJson() {
@@ -1125,7 +1201,7 @@
           const ref = resolveItemRef(node);
           if (!ref) return;
           const input = node.parentElement.querySelector("input");
-          await uploadToInput(input, (url) => {
+          await uploadToInput(input, node, (url) => {
             state.config.rich_media_config[ref.name] = url;
             render();
             markDirty();
@@ -1294,7 +1370,7 @@
         node.addEventListener("click", async () => {
           const group = node.dataset.group;
           const input = node.parentElement.querySelector("input");
-          await uploadToInput(input, (url) => {
+          await uploadToInput(input, node, (url) => {
             state.config.notification_icons[group] = url;
             render();
             markDirty();
@@ -1536,6 +1612,7 @@
       el("webuitoken").value = state.settings.webuitoken || "";
       el("settingbrandname").value = state.settings.brandname || "Monitor";
       el("settingpagetitle").value = state.settings.pagetitle || "Monitor";
+      fillSelect(el("settingtimezone"), TIMEZONES.map((timezone) => [timezoneLabel(timezone), timezone]), state.settings.timezone || "Asia/Hong_Kong");
       el("settinglogourl").value = state.settings.logourl || "";
       el("settingfaviconurl").value = state.settings.faviconurl || "";
       fillSelect(el("settingtheme"), Object.entries(THEMES).map(([key, theme]) => [theme.name, key]), state.settings.theme);
@@ -1586,12 +1663,16 @@
       setStatus("已添加", "ok");
     }
 
-    async function loadConfig() {
-      if (state.dirty && !window.confirm("当前有未保存改动。继续读取会覆盖这些改动，是否继续？")) {
+    async function loadConfig(options = {}) {
+      if (!options.force && state.dirty && !window.confirm("当前有未保存改动。继续读取会覆盖这些改动，是否继续？")) {
         return;
       }
       saveSettings();
       setStatus("读取中");
+      await readConfigOnce();
+    }
+
+    async function readConfigOnce() {
       const data = await api("/api/config");
       state.config = normalizeConfig(data.config);
       state.sha = data.sha;
@@ -1600,6 +1681,28 @@
       render();
       setCleanSnapshot();
       setStatus(data.ok ? "已读取" : "配置有错误", data.ok ? "ok" : "error");
+    }
+
+    async function loadConfigWithRetry(options = {}) {
+      if (!options.force && state.dirty && !window.confirm("当前有未保存改动。继续读取会覆盖这些改动，是否继续？")) {
+        return;
+      }
+      saveSettings();
+      window.clearTimeout(state.loadRetryTimer);
+      const delays = [0, 1000, 3000, 5000];
+      let lasterror = null;
+      for (let attempt = 0; attempt < delays.length; attempt += 1) {
+        if (delays[attempt]) await sleep(delays[attempt]);
+        try {
+          setStatus(attempt ? `读取失败，正在重试 ${attempt}/${delays.length - 1}` : "读取中", attempt ? "warn" : "");
+          await readConfigOnce();
+          return;
+        } catch (error) {
+          lasterror = error;
+        }
+      }
+      setRetryStatus(`读取失败：${lasterror?.message || "未知错误"}`);
+      throw lasterror;
     }
 
     async function validateConfigRemote(options = {}) {
@@ -1674,7 +1777,7 @@
       box.innerHTML = `
         <div class="status ${run.conclusion === "success" ? "ok" : run.conclusion ? "error" : "warn"}">${escapeHtml(label)}：${escapeHtml(run.status)} / ${escapeHtml(conclusion)}</div>
         <div>分支：${escapeHtml(run.branch || "")}</div>
-        <div>更新：${escapeHtml(run.updated_at || run.created_at || "")}</div>
+        <div>更新：${escapeHtml(formatTime(run.updated_at || run.created_at))}</div>
         <a href="${escapeAttr(run.html_url)}" target="_blank" rel="noreferrer">打开 GitHub Actions 运行记录</a>
         <div id="runjobs">读取步骤中...</div>`;
       refreshRunJobs(run.id).catch(() => {
@@ -1691,11 +1794,49 @@
         box.textContent = "暂无步骤信息";
         return;
       }
-      box.innerHTML = data.jobs.map((job) => `
+      const failed = findFailedRunPart(data.jobs);
+      const summary = failed ? `
+        <div class="failure-summary">
+          <div>失败 Job：${escapeHtml(failed.job.name)}</div>
+          ${failed.step ? `<div>失败 Step：${escapeHtml(failed.step.name)}</div>` : ""}
+        </div>` : "";
+      box.innerHTML = summary + data.jobs.map((job) => `
         <div>
           <strong>${escapeHtml(job.name)}</strong>：${escapeHtml(job.status)} / ${escapeHtml(job.conclusion || "进行中")}
-          <ul>${(job.steps || []).map((step) => `<li>${escapeHtml(step.number)}. ${escapeHtml(step.name)}：${escapeHtml(step.status)} / ${escapeHtml(step.conclusion || "进行中")}</li>`).join("")}</ul>
+          <ul>${(job.steps || []).map((step) => `<li class="${step.conclusion === "failure" ? "failed-step" : ""}">${escapeHtml(step.number)}. ${escapeHtml(step.name)}：${escapeHtml(step.status)} / ${escapeHtml(step.conclusion || "进行中")}${step.completed_at ? `，${escapeHtml(formatTime(step.completed_at))}` : ""}</li>`).join("")}</ul>
         </div>`).join("");
+    }
+
+    function findFailedRunPart(jobs) {
+      const job = (jobs || []).find((item) => item.conclusion === "failure");
+      if (!job) return null;
+      const step = (job.steps || []).find((item) => item.conclusion === "failure");
+      return { job, step };
+    }
+
+    function formatTime(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      const timezone = state.settings.timezone || "Asia/Hong_Kong";
+      try {
+        const parts = new Intl.DateTimeFormat("en-CA", {
+          timeZone: timezone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }).formatToParts(date).reduce((acc, part) => {
+          acc[part.type] = part.value;
+          return acc;
+        }, {});
+        return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
+      } catch {
+        return value.replace("T", " ").replace("Z", "");
+      }
     }
 
     function startRunPolling() {
@@ -1714,19 +1855,28 @@
       }, 5000);
     }
 
-    async function uploadToInput(input, ondone) {
+    async function uploadToInput(input, button, ondone) {
       const file = await chooseImageFile();
       if (!file) return;
+      const originalText = button?.textContent || "上传";
       try {
-        setStatus("图片上传中");
+        if (button) {
+          button.disabled = true;
+          button.textContent = "上传中";
+        }
         const form = new FormData();
         form.append("file", file);
         const data = await api("/api/upload", { method: "POST", body: form });
         input.value = data.url;
         ondone(data.url);
-        setStatus("图片已上传", "ok");
+        showToast("图片已上传", "ok");
       } catch (error) {
-        setStatus(error.message, "error");
+        showToast(error.message, "error", 5200);
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
       }
     }
 
@@ -1757,8 +1907,6 @@
         });
       });
 
-      el("loadbtn").addEventListener("click", () => loadConfig().catch((error) => setStatus(error.message, "error")));
-      el("validatebtn").addEventListener("click", () => validateConfigRemote().catch((error) => setStatus(error.message, "error")));
       el("undobtn").addEventListener("click", () => {
         if (!state.dirty) return;
         state.config = normalizeConfig(JSON.parse(state.savedjson));
@@ -1865,7 +2013,7 @@
       });
       render();
       if (workerurl()) {
-        loadConfig().catch((error) => setStatus(error.message, "error"));
+        loadConfigWithRetry().catch(() => {});
         refreshLatestRun().catch(() => {});
       } else {
         setStatus("请先在设置中填写 Worker URL", "warn");
@@ -1877,7 +2025,7 @@
         button.addEventListener("click", async () => {
           const targetid = button.dataset.uploadTarget;
           const input = el(targetid);
-          await uploadToInput(input, (url) => {
+          await uploadToInput(input, button, (url) => {
             if (targetid === "newmedia") return;
             if (targetid === "defaulticoninput") {
               state.config.default_icon = url;
@@ -1905,13 +2053,16 @@
         webuitoken: "webuitoken",
         settingbrandname: "brandname",
         settingpagetitle: "pagetitle",
+        settingtimezone: "timezone",
         settinglogourl: "logourl",
         settingfaviconurl: "faviconurl",
       };
       for (const [id, key] of Object.entries(map)) {
-        el(id).addEventListener("input", () => {
+        const eventname = el(id).tagName === "SELECT" ? "change" : "input";
+        el(id).addEventListener(eventname, () => {
           state.settings[key] = el(id).value.trim();
           saveSettings();
+          if (key === "timezone") refreshLatestRun().catch(() => {});
         });
       }
       el("settingtheme").addEventListener("change", () => {
@@ -1938,6 +2089,33 @@
 
     function safeJson(raw, fallback) {
       try { return JSON.parse(raw); } catch { return fallback; }
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+
+    function getSupportedTimezones() {
+      if (Intl.supportedValuesOf) {
+        return Intl.supportedValuesOf("timeZone");
+      }
+      return [
+        "UTC",
+        "Asia/Hong_Kong",
+        "Asia/Shanghai",
+        "Asia/Tokyo",
+        "Asia/Seoul",
+        "Asia/Singapore",
+        "Asia/Taipei",
+        "Europe/London",
+        "Europe/Paris",
+        "America/New_York",
+        "America/Los_Angeles",
+      ];
+    }
+
+    function timezoneLabel(timezone) {
+      return timezone.replace(/_/g, " ");
     }
 
     function escapeHtml(value) {
