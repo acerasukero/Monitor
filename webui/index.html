@@ -158,6 +158,13 @@
       gap: 8px;
     }
 
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
     .layout {
       display: grid;
       grid-template-columns: 280px minmax(0, 1fr);
@@ -206,6 +213,18 @@
     .sidepanel h2 {
       margin: 0;
       font-size: 13px;
+    }
+
+    .run-status {
+      display: grid;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .run-status a {
+      color: var(--accent);
+      word-break: break-all;
     }
 
     .content {
@@ -350,6 +369,17 @@
     .status.ok { border-color: #a7d6bf; color: var(--ok); background: #effaf4; }
     .status.error { border-color: #f0aaa3; color: var(--danger); background: var(--danger-soft); }
     .status.warn { border-color: #f2c27b; color: var(--warn); background: #fff7e8; }
+
+    .upload-field {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .upload-field button {
+      white-space: nowrap;
+    }
 
     .messages {
       display: grid;
@@ -506,10 +536,13 @@
       </div>
       <div class="actions">
         <div id="status" class="status">等待加载</div>
-        <button id="loadbtn">读取</button>
-        <button id="validatebtn">校验</button>
-        <button id="savebtn" class="primary">保存</button>
-        <button id="runbtn">运行</button>
+        <div id="topactions" class="top-actions">
+          <button id="loadbtn">读取</button>
+          <button id="validatebtn">校验</button>
+          <button id="undobtn">撤销</button>
+          <button id="savebtn" class="primary">保存</button>
+          <button id="runbtn">运行</button>
+        </div>
       </div>
     </header>
 
@@ -526,6 +559,11 @@
         <section class="sidepanel">
           <h2>校验结果</h2>
           <div id="messages" class="messages"></div>
+        </section>
+
+        <section class="sidepanel">
+          <h2>运行状态</h2>
+          <div id="runstatus" class="run-status">暂无运行记录</div>
         </section>
       </aside>
 
@@ -560,10 +598,13 @@
               </label>
               <label class="span-5" id="newregexlabel">RSS 正则
                 <input id="newregex">
-              </label>
-              <label class="span-5">富媒体文件URL
+            </label>
+            <label class="span-5">富媒体文件URL
+              <div class="upload-field">
                 <input id="newmedia">
-              </label>
+                <button data-upload-target="newmedia" type="button">上传</button>
+              </div>
+            </label>
               <button id="additembtn" class="primary span-2">添加</button>
             </div>
           </div>
@@ -582,7 +623,10 @@
                 <input id="defaultgroupinput">
               </label>
               <label>图标URL（默认）
-                <input id="defaulticoninput">
+                <div class="upload-field">
+                  <input id="defaulticoninput">
+                  <button data-upload-target="defaulticoninput" type="button">上传</button>
+                </div>
               </label>
               <label>Bark分组名称
                 <input id="defaultarchiveinput">
@@ -646,10 +690,16 @@
               <select id="settingtheme"></select>
             </label>
             <label class="span-6">顶部图标URL
-              <input id="settinglogourl">
+              <div class="upload-field">
+                <input id="settinglogourl">
+                <button data-upload-target="settinglogourl" type="button">上传</button>
+              </div>
             </label>
             <label class="span-6">标题栏图标URL
-              <input id="settingfaviconurl">
+              <div class="upload-field">
+                <input id="settingfaviconurl">
+                <button data-upload-target="settingfaviconurl" type="button">上传</button>
+              </div>
             </label>
             <label class="span-2">背景
               <input id="colorbg" class="color-input" type="color">
@@ -733,6 +783,11 @@
       activeTab: "items",
       display: { level: "global", owner: "" },
       settings: loadSettings(),
+      savedjson: "",
+      dirty: false,
+      validateTimer: null,
+      validating: false,
+      runTimer: null,
     };
 
     function baseConfig() {
@@ -842,14 +897,20 @@
       };
     }
 
+    function authHeaders() {
+      const token = (state.settings.webuitoken || "").trim();
+      return token ? { "Authorization": `Bearer ${token}` } : {};
+    }
+
     async function api(path, options = {}) {
       const base = workerurl();
       if (!base) {
         throw new Error("Worker URL 为空");
       }
+      const requestHeaders = options.body instanceof FormData ? authHeaders() : headers();
       const response = await fetch(`${base}${path}`, {
         ...options,
-        headers: { ...headers(), ...(options.headers || {}) },
+        headers: { ...requestHeaders, ...(options.headers || {}) },
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -864,6 +925,39 @@
       const target = el("status");
       target.textContent = text;
       target.className = `status ${kind}`.trim();
+    }
+
+    function configJson() {
+      return JSON.stringify(state.config || {});
+    }
+
+    function setCleanSnapshot() {
+      state.savedjson = configJson();
+      state.dirty = false;
+      updateDirtyUi();
+    }
+
+    function markDirty() {
+      state.dirty = state.savedjson !== configJson();
+      updateDirtyUi();
+      scheduleValidation();
+    }
+
+    function updateDirtyUi() {
+      if (state.dirty) {
+        el("savebtn").classList.add("primary");
+        if (!state.validating) setStatus("有未保存改动", "warn");
+      } else {
+        el("savebtn").classList.add("primary");
+      }
+    }
+
+    function scheduleValidation() {
+      if (!state.config || !workerurl()) return;
+      window.clearTimeout(state.validateTimer);
+      state.validateTimer = window.setTimeout(() => {
+        validateConfigRemote({ automatic: true }).catch((error) => setStatus(error.message, "error"));
+      }, 650);
     }
 
     function getGroups(includedefault = true) {
@@ -1011,6 +1105,7 @@
           if (field === "media") state.config.rich_media_config[ref.name] = node.value.trim();
           if (["name", "target", "region"].includes(field)) setItemField(ref, field, node.value.trim());
           render();
+          markDirty();
         });
       });
 
@@ -1021,6 +1116,20 @@
           state.config[ref.meta.key].splice(ref.index, 1);
           cleanupItem(ref.name);
           render();
+          markDirty();
+        });
+      });
+
+      container.querySelectorAll("[data-upload-kind='item-media']").forEach((node) => {
+        node.addEventListener("click", async () => {
+          const ref = resolveItemRef(node);
+          if (!ref) return;
+          const input = node.parentElement.querySelector("input");
+          await uploadToInput(input, (url) => {
+            state.config.rich_media_config[ref.name] = url;
+            render();
+            markDirty();
+          });
         });
       });
     }
@@ -1069,7 +1178,12 @@
           ${regiontd}
           <td><select data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="group">${getGroups().map((item) => `<option value="${escapeAttr(item)}" ${item === group ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}</select></td>
           ${regextd}
-          <td><input data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="media" value="${escapeAttr(media)}"></td>
+          <td>
+            <div class="upload-field">
+              <input data-edit data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" data-field="media" value="${escapeAttr(media)}">
+              <button data-upload-kind="item-media" data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" type="button">上传</button>
+            </div>
+          </td>
           <td class="tight"><button class="icon danger" data-delete data-source="${escapeAttr(ref.source)}" data-index="${ref.index}" title="删除">×</button></td>
         </tr>`;
     }
@@ -1097,7 +1211,10 @@
               <input data-group-field="name" value="${escapeAttr(group)}">
             </label>
             <label>图标URL
-              <input data-group-field="icon" value="${escapeAttr(state.config.notification_icons[group] || "")}">
+              <div class="upload-field">
+                <input data-group-field="icon" value="${escapeAttr(state.config.notification_icons[group] || "")}">
+                <button data-upload-kind="group-icon" data-group="${escapeAttr(group)}" type="button">上传</button>
+              </div>
             </label>
             <label>Bark分组名称
               <input data-group-field="archive" value="${escapeAttr(state.config.bark_archive_mapping[group] || "")}">
@@ -1109,7 +1226,7 @@
             </div>
           </div>
           <div class="group-items">
-            <h4>组内推送顺序</h4>
+            <h4>组内排序</h4>
             ${(state.config.notification_groups[group] || []).map((name, index) => `
               <div class="group-item-row">
                 <div>${escapeHtml(index + 1)}. ${escapeHtml(name)}</div>
@@ -1129,6 +1246,7 @@
           if (node.dataset.groupField === "icon") state.config.notification_icons[oldgroup] = node.value.trim();
           if (node.dataset.groupField === "archive") state.config.bark_archive_mapping[oldgroup] = node.value.trim();
           render();
+          markDirty();
         });
       });
 
@@ -1141,6 +1259,7 @@
           delete state.config.build_number_check.groups[group];
           delete state.config.suffix_config.groups[group];
           render();
+          markDirty();
         });
       });
 
@@ -1149,6 +1268,7 @@
           const group = node.closest("[data-group]").dataset.group;
           moveGroup(group, Number(node.dataset.moveGroup));
           render();
+          markDirty();
         });
       });
 
@@ -1157,6 +1277,7 @@
           const group = node.closest("[data-group]").dataset.group;
           moveGroupItem(group, Number(node.dataset.moveGroupItem), Number(node.dataset.direction));
           render();
+          markDirty();
         });
       });
 
@@ -1165,6 +1286,19 @@
           const group = node.closest("[data-group]").dataset.group;
           state.config.notification_groups[group].splice(Number(node.dataset.removeGroupItem), 1);
           render();
+          markDirty();
+        });
+      });
+
+      list.querySelectorAll("[data-upload-kind='group-icon']").forEach((node) => {
+        node.addEventListener("click", async () => {
+          const group = node.dataset.group;
+          const input = node.parentElement.querySelector("input");
+          await uploadToInput(input, (url) => {
+            state.config.notification_icons[group] = url;
+            render();
+            markDirty();
+          });
         });
       });
     }
@@ -1325,6 +1459,7 @@
           updateRule(node);
           renderDisplay();
           renderJson();
+          markDirty();
         });
       });
     }
@@ -1392,6 +1527,7 @@
         el(`${name}Tab`).classList.toggle("hidden", state.activeTab !== name);
         document.querySelector(`[data-tab="${name}"]`).classList.toggle("active", state.activeTab === name);
       }
+      el("topactions").classList.toggle("hidden", state.activeTab === "settings");
     }
 
     function fillSettingsForm() {
@@ -1446,10 +1582,14 @@
       el("newregex").value = "";
       el("newmedia").value = "";
       render();
+      markDirty();
       setStatus("已添加", "ok");
     }
 
     async function loadConfig() {
+      if (state.dirty && !window.confirm("当前有未保存改动。继续读取会覆盖这些改动，是否继续？")) {
+        return;
+      }
       saveSettings();
       setStatus("读取中");
       const data = await api("/api/config");
@@ -1458,13 +1598,16 @@
       state.validation = data.validation;
       el("repoline").textContent = `${data.path || "config.json"} @ ${data.branch || "main"}`;
       render();
+      setCleanSnapshot();
       setStatus(data.ok ? "已读取" : "配置有错误", data.ok ? "ok" : "error");
     }
 
-    async function validateConfigRemote() {
+    async function validateConfigRemote(options = {}) {
       saveSettings();
       syncJsonToState();
-      setStatus("校验中");
+      if (!state.config) return false;
+      state.validating = true;
+      setStatus(options.automatic ? "自动校验中" : "校验中");
       let data;
       try {
         data = await api("/api/config/validate", {
@@ -1473,11 +1616,19 @@
         });
       } catch (error) {
         if (error.data?.errors || error.data?.warnings) data = error.data;
-        else throw error;
+        else {
+          state.validating = false;
+          throw error;
+        }
       }
       state.validation = data;
       renderMessages();
-      setStatus(data.ok ? "校验通过" : "校验失败", data.ok ? "ok" : "error");
+      state.validating = false;
+      if (state.dirty && data.ok) {
+        setStatus("校验通过，有未保存改动", "warn");
+      } else {
+        setStatus(data.ok ? "校验通过" : "校验失败", data.ok ? "ok" : "error");
+      }
       return data.ok;
     }
 
@@ -1491,14 +1642,102 @@
       });
       state.validation = data.validation;
       renderMessages();
+      setCleanSnapshot();
       setStatus("已保存", "ok");
     }
 
     async function runWorkflow() {
       saveSettings();
+      if (state.dirty && !window.confirm("当前有未保存改动。运行会使用 GitHub 上最后保存的配置，是否继续？")) {
+        return;
+      }
       setStatus("触发中");
       const data = await api("/api/run", { method: "POST", body: "{}" });
+      renderRunStatus(data.run, "已触发");
       setStatus(`已触发 ${data.workflow}`, "ok");
+      startRunPolling();
+    }
+
+    async function refreshLatestRun() {
+      const data = await api("/api/run/latest");
+      renderRunStatus(data.run, "最近运行");
+      return data.run;
+    }
+
+    function renderRunStatus(run, label = "运行状态") {
+      const box = el("runstatus");
+      if (!run) {
+        box.textContent = "暂无运行记录";
+        return;
+      }
+      const conclusion = run.conclusion || "进行中";
+      box.innerHTML = `
+        <div class="status ${run.conclusion === "success" ? "ok" : run.conclusion ? "error" : "warn"}">${escapeHtml(label)}：${escapeHtml(run.status)} / ${escapeHtml(conclusion)}</div>
+        <div>分支：${escapeHtml(run.branch || "")}</div>
+        <div>更新：${escapeHtml(run.updated_at || run.created_at || "")}</div>
+        <a href="${escapeAttr(run.html_url)}" target="_blank" rel="noreferrer">打开 GitHub Actions 运行记录</a>
+        <div id="runjobs">读取步骤中...</div>`;
+      refreshRunJobs(run.id).catch(() => {
+        const jobs = el("runjobs");
+        if (jobs) jobs.textContent = "步骤读取失败";
+      });
+    }
+
+    async function refreshRunJobs(runid) {
+      const data = await api(`/api/run/${runid}/jobs`);
+      const box = el("runjobs");
+      if (!box) return;
+      if (!data.jobs?.length) {
+        box.textContent = "暂无步骤信息";
+        return;
+      }
+      box.innerHTML = data.jobs.map((job) => `
+        <div>
+          <strong>${escapeHtml(job.name)}</strong>：${escapeHtml(job.status)} / ${escapeHtml(job.conclusion || "进行中")}
+          <ul>${(job.steps || []).map((step) => `<li>${escapeHtml(step.number)}. ${escapeHtml(step.name)}：${escapeHtml(step.status)} / ${escapeHtml(step.conclusion || "进行中")}</li>`).join("")}</ul>
+        </div>`).join("");
+    }
+
+    function startRunPolling() {
+      window.clearInterval(state.runTimer);
+      let count = 0;
+      state.runTimer = window.setInterval(async () => {
+        count += 1;
+        try {
+          const run = await refreshLatestRun();
+          if (run?.conclusion || count >= 24) {
+            window.clearInterval(state.runTimer);
+          }
+        } catch {
+          if (count >= 3) window.clearInterval(state.runTimer);
+        }
+      }, 5000);
+    }
+
+    async function uploadToInput(input, ondone) {
+      const file = await chooseImageFile();
+      if (!file) return;
+      try {
+        setStatus("图片上传中");
+        const form = new FormData();
+        form.append("file", file);
+        const data = await api("/api/upload", { method: "POST", body: form });
+        input.value = data.url;
+        ondone(data.url);
+        setStatus("图片已上传", "ok");
+      } catch (error) {
+        setStatus(error.message, "error");
+      }
+    }
+
+    function chooseImageFile() {
+      return new Promise((resolve) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.addEventListener("change", () => resolve(input.files?.[0] || null), { once: true });
+        input.click();
+      });
     }
 
     function syncJsonToState() {
@@ -1520,6 +1759,14 @@
 
       el("loadbtn").addEventListener("click", () => loadConfig().catch((error) => setStatus(error.message, "error")));
       el("validatebtn").addEventListener("click", () => validateConfigRemote().catch((error) => setStatus(error.message, "error")));
+      el("undobtn").addEventListener("click", () => {
+        if (!state.dirty) return;
+        state.config = normalizeConfig(JSON.parse(state.savedjson));
+        render();
+        state.dirty = false;
+        updateDirtyUi();
+        setStatus("已撤销未保存改动", "ok");
+      });
       el("savebtn").addEventListener("click", () => saveConfig().catch((error) => {
         if (error.data?.errors || error.data?.warnings) {
           state.validation = error.data;
@@ -1553,14 +1800,17 @@
         }
         state.config.default_group = next;
         render();
+        markDirty();
       });
       el("defaulticoninput").addEventListener("change", () => {
         state.config.default_icon = el("defaulticoninput").value.trim();
         renderJson();
+        markDirty();
       });
       el("defaultarchiveinput").addEventListener("change", () => {
         if (state.config.default_group) state.config.bark_archive_mapping[state.config.default_group] = el("defaultarchiveinput").value.trim();
         renderJson();
+        markDirty();
       });
       el("addgroupbtn").addEventListener("click", () => {
         let base = "新分组";
@@ -1571,12 +1821,14 @@
         state.config.notification_icons[name] = "";
         state.config.bark_archive_mapping[name] = name;
         render();
+        markDirty();
       });
 
       el("applyjsonbtn").addEventListener("click", () => {
         try {
           syncJsonToState();
           render();
+          markDirty();
           setStatus("JSON 已应用", "ok");
         } catch (error) {
           setStatus(error.message, "error");
@@ -1586,14 +1838,65 @@
         try {
           syncJsonToState();
           renderJson();
+          markDirty();
           setStatus("已格式化", "ok");
         } catch (error) {
           setStatus(error.message, "error");
         }
       });
+      el("jsoneditor").addEventListener("input", () => {
+        if (state.activeTab !== "json") return;
+        try {
+          state.config = normalizeConfig(JSON.parse(el("jsoneditor").value));
+          markDirty();
+        } catch (error) {
+          state.validation = { ok: false, errors: [`JSON: ${error.message}`], warnings: [] };
+          renderMessages();
+          setStatus("JSON 格式错误", "error");
+        }
+      });
 
       bindSettingsEvents();
+      bindStaticUploadEvents();
+      window.addEventListener("beforeunload", (event) => {
+        if (!state.dirty) return;
+        event.preventDefault();
+        event.returnValue = "";
+      });
       render();
+      if (workerurl()) {
+        loadConfig().catch((error) => setStatus(error.message, "error"));
+        refreshLatestRun().catch(() => {});
+      } else {
+        setStatus("请先在设置中填写 Worker URL", "warn");
+      }
+    }
+
+    function bindStaticUploadEvents() {
+      document.querySelectorAll("[data-upload-target]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const targetid = button.dataset.uploadTarget;
+          const input = el(targetid);
+          await uploadToInput(input, (url) => {
+            if (targetid === "newmedia") return;
+            if (targetid === "defaulticoninput") {
+              state.config.default_icon = url;
+              renderJson();
+              markDirty();
+              return;
+            }
+            if (targetid === "settinglogourl") {
+              state.settings.logourl = url;
+              saveSettings();
+              return;
+            }
+            if (targetid === "settingfaviconurl") {
+              state.settings.faviconurl = url;
+              saveSettings();
+            }
+          });
+        });
+      });
     }
 
     function bindSettingsEvents() {
