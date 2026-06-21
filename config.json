@@ -159,7 +159,8 @@
     "apps": {
       "NIKKE KR": {
         "App Store": true
-      }
+      },
+      "币安 HK": {}
     }
   },
   "rss_regex_rules": {
@@ -206,7 +207,8 @@
           "iOS",
           false
         ]
-      }
+      },
+      "币安 HK": {}
     }
   },
   "notification_groups": {
