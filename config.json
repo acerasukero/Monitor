@@ -153,7 +153,8 @@
     "groups": {
       "GitHub项目更新": {
         "GitHub": false
-      }
+      },
+      "应用更新": {}
     },
     "apps": {
       "NIKKE KR": {
@@ -191,12 +192,7 @@
       ]
     },
     "groups": {
-      "应用更新": {
-        "App Store": [
-          "iOS",
-          false
-        ]
-      },
+      "应用更新": {},
       "GitHub项目更新": {
         "GitHub": [
           "GitHub",
