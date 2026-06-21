@@ -1,4 +1,4 @@
-<!doctype html>
+、<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -142,6 +142,66 @@
       min-height: 28px;
       width: 28px;
       padding: 0;
+    }
+
+    .image-editor-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(18, 24, 20, 0.46);
+    }
+
+    .image-editor {
+      width: min(760px, 100%);
+      max-height: calc(100vh - 36px);
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) 260px;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: auto;
+    }
+
+    .image-editor-preview {
+      display: grid;
+      place-items: center;
+      min-height: 320px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f2f4f1;
+      overflow: hidden;
+    }
+
+    .image-editor-preview canvas {
+      width: min(100%, 420px);
+      aspect-ratio: 1;
+      border-radius: 6px;
+      background: #fff;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .image-editor-preview canvas.dragging {
+      cursor: grabbing;
+    }
+
+    .image-editor-controls {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .image-editor-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-top: 4px;
     }
 
     .brand {
@@ -340,6 +400,11 @@
       line-height: 1;
     }
 
+    .metric.empty {
+      visibility: hidden;
+      box-shadow: none;
+    }
+
     .tools {
       display: grid;
       grid-template-columns: 150px 150px minmax(180px, 1fr);
@@ -366,6 +431,75 @@
     .source-list {
       display: grid;
       gap: 14px;
+    }
+
+    .source-switcher,
+    .group-switcher {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .source-switch,
+    .group-switch {
+      min-height: 38px;
+      border-color: var(--line);
+      background: transparent;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .source-switch.active,
+    .group-switch.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .pager-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .pager-dot {
+      width: 11px;
+      height: 11px;
+      min-height: 11px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid var(--accent);
+      background: transparent;
+    }
+
+    .pager-dot.active {
+      background: var(--accent);
+    }
+
+    .blank-row td {
+      height: 53px;
+      color: transparent;
+      user-select: none;
+    }
+
+    .group-item-row.blank-row {
+      min-height: 38px;
+      color: transparent;
+      user-select: none;
     }
 
     .table-wrap {
@@ -527,7 +661,7 @@
 
     .rule-grid {
       display: grid;
-      grid-template-columns: 120px 120px minmax(120px, 1fr) 110px 150px 130px;
+      grid-template-columns: 120px 150px minmax(120px, 1fr) 110px minmax(190px, 1fr);
       gap: 8px;
       align-items: center;
     }
@@ -566,6 +700,8 @@
       .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
       .nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .image-editor { grid-template-columns: 1fr; }
+      .image-editor-preview { min-height: 260px; }
       .tools, .group-row, .default-group-row, .rule-controls, .rule-grid, .setting-grid, .form-grid {
         grid-template-columns: 1fr;
       }
@@ -577,6 +713,31 @@
 </head>
 <body>
   <div id="toasthost" class="toast-host"></div>
+  <div id="imageeditor" class="image-editor-backdrop hidden" role="dialog" aria-modal="true" aria-label="编辑图片">
+    <div class="image-editor">
+      <div class="image-editor-preview">
+        <canvas id="imageeditorcanvas" width="512" height="512"></canvas>
+      </div>
+      <div class="image-editor-controls">
+        <label>上传方式
+          <select id="imagemask">
+            <option value="original">原图</option>
+            <option value="square">方形裁剪</option>
+            <option value="circle">圆形遮罩</option>
+            <option value="rounded">圆角遮罩</option>
+          </select>
+        </label>
+        <label>缩放
+          <input id="imagezoom" type="range" min="1" max="4" step="0.01" value="1">
+        </label>
+        <div class="status">遮罩模式下可拖动图片调整位置。</div>
+        <div class="image-editor-actions">
+          <button id="imagecancelbtn" type="button">取消</button>
+          <button id="imageconfirmbtn" class="primary" type="button">确认上传</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="app">
     <header class="topbar">
       <div class="brand">
@@ -687,9 +848,9 @@
           <div class="panel-body group-list" id="grouplist"></div>
         </section>
 
-        <section id="displayTab" class="panel hidden">
+      <section id="displayTab" class="panel hidden">
           <div class="panel-head">
-            <h2 class="panel-title">后缀显示与构建号比对</h2>
+            <h2 class="panel-title">后缀与构建号比对</h2>
           </div>
           <div class="panel-body">
             <div class="rule-controls">
@@ -787,6 +948,7 @@
       "RSS": { key: "rss_list", target: "RSS 链接", region: false },
     };
     const SOURCE_NAMES = Object.keys(SOURCES);
+    const ITEMS_PER_PAGE = 5;
     const storage = window.localStorage;
     const el = (id) => document.getElementById(id);
     const TIMEZONES = getSupportedTimezones();
@@ -836,6 +998,10 @@
       validation: null,
       activeTab: "items",
       display: { level: "global", owner: "" },
+      activesource: "",
+      activegroup: "",
+      sourcepages: {},
+      grouppages: {},
       settings: loadSettings(),
       savedjson: "",
       dirty: false,
@@ -1139,7 +1305,16 @@
     function renderSummary() {
       const summary = el("summary");
       const counts = SOURCE_NAMES.map((source) => [source, state.config ? state.config[SOURCES[source].key].length : 0]);
-      summary.innerHTML = counts.map(([label, value]) => `<div class="metric"><span>${escapeHtml(label)}</span><strong>${value}</strong></div>`).join("");
+      const columns = summaryColumns();
+      const blanks = (columns - (counts.length % columns)) % columns;
+      summary.innerHTML = [
+        ...counts.map(([label, value]) => `<div class="metric"><span>${escapeHtml(label)}</span><strong>${value}</strong></div>`),
+        ...Array.from({ length: blanks }, () => `<div class="metric empty" aria-hidden="true"></div>`),
+      ].join("");
+    }
+
+    function summaryColumns() {
+      return window.matchMedia("(max-width: 1060px)").matches ? 2 : 5;
     }
 
     function renderFilters() {
@@ -1160,16 +1335,30 @@
       const groupfilter = el("groupfilter").value;
       const query = el("searchinput").value.trim().toLowerCase();
 
-      container.innerHTML = SOURCE_NAMES
+      const sourcegroups = SOURCE_NAMES
         .filter((source) => !sourcefilter || source === sourcefilter)
         .map((source) => {
           const refs = getItems(source).filter((ref) => {
             const haystack = [ref.source, ref.name, ref.target, ref.region, groupOf(ref.name)].join(" ").toLowerCase();
             return (!groupfilter || groupOf(ref.name) === groupfilter) && (!query || haystack.includes(query));
           });
-          if (!refs.length) return "";
-          return renderSourceTable(source, refs);
-        }).join("");
+          return { source, refs };
+        });
+      const sourcekeys = sourcegroups.map((group) => group.source);
+      const active = sourcefilter || (sourcekeys.includes(state.activesource) ? state.activesource : sourcekeys[0]);
+      state.activesource = active || "";
+      const activegroup = sourcegroups.find((group) => group.source === active) || sourcegroups[0];
+
+      container.innerHTML = activegroup
+        ? `${renderSourceSwitcher(sourcegroups, active, Boolean(sourcefilter))}${renderSourceTable(activegroup.source, activegroup.refs)}`
+        : "";
+
+      container.querySelectorAll("[data-source-switch]").forEach((node) => {
+        node.addEventListener("click", () => {
+          state.activesource = node.dataset.sourceSwitch;
+          renderItems();
+        });
+      });
 
       container.querySelectorAll("[data-edit]").forEach((node) => {
         node.addEventListener("change", () => {
@@ -1208,6 +1397,27 @@
           });
         });
       });
+
+      container.querySelectorAll("[data-page-source]").forEach((node) => {
+        node.addEventListener("click", () => {
+          const source = node.dataset.pageSource;
+          const page = Number(node.dataset.page);
+          state.sourcepages[source] = page;
+          renderItems();
+        });
+      });
+    }
+
+    function renderSourceSwitcher(sourcegroups, active, fixed) {
+      if (fixed || sourcegroups.length <= 1) return "";
+      return `
+        <div class="source-switcher" aria-label="切换来源表">
+          ${sourcegroups.map(({ source, refs }) => `
+            <button class="source-switch ${source === active ? "active" : ""}" data-source-switch="${escapeAttr(source)}" type="button">
+              ${escapeHtml(source)} · ${refs.length}
+            </button>
+          `).join("")}
+        </div>`;
     }
 
     function renderSourceTable(source, refs) {
@@ -1215,10 +1425,16 @@
       const isrss = source === "RSS";
       const regionth = meta.region ? "<th>地区</th>" : "";
       const regexth = isrss ? "<th>RSS 正则</th>" : "";
+      const totalpages = Math.max(1, Math.ceil(refs.length / ITEMS_PER_PAGE));
+      const currentpage = clampPage(state.sourcepages[source] || 0, totalpages);
+      state.sourcepages[source] = currentpage;
+      const pageitems = refs.slice(currentpage * ITEMS_PER_PAGE, currentpage * ITEMS_PER_PAGE + ITEMS_PER_PAGE);
+      const blankcount = ITEMS_PER_PAGE - pageitems.length;
+      const colcount = 5 + (meta.region ? 1 : 0) + (isrss ? 1 : 0);
       return `
         <section class="panel">
           <div class="panel-head">
-            <h2 class="panel-title">${escapeHtml(source)}</h2>
+            <h2 class="panel-title">${escapeHtml(source)} · ${refs.length}</h2>
           </div>
           <div class="table-wrap">
             <table>
@@ -1234,11 +1450,34 @@
                 </tr>
               </thead>
               <tbody>
-                ${refs.map((ref) => renderItemRow(ref)).join("")}
+                ${pageitems.map((ref) => renderItemRow(ref)).join("")}
+                ${Array.from({ length: blankcount }, () => renderBlankItemRow(colcount)).join("")}
               </tbody>
             </table>
           </div>
+          ${renderPager(source, currentpage, totalpages)}
         </section>`;
+    }
+
+    function renderPager(source, currentpage, totalpages) {
+      return `
+        <div class="pager">
+          <button class="icon" data-page-source="${escapeAttr(source)}" data-page="${Math.max(0, currentpage - 1)}" ${currentpage === 0 ? "disabled" : ""} title="上一页">‹</button>
+          <div class="pager-dots">
+            ${Array.from({ length: totalpages }, (_, index) => `<button class="pager-dot ${index === currentpage ? "active" : ""}" data-page-source="${escapeAttr(source)}" data-page="${index}" title="第 ${index + 1} 页"></button>`).join("")}
+          </div>
+          <button class="icon" data-page-source="${escapeAttr(source)}" data-page="${Math.min(totalpages - 1, currentpage + 1)}" ${currentpage >= totalpages - 1 ? "disabled" : ""} title="下一页">›</button>
+        </div>`;
+    }
+
+    function renderBlankItemRow(colcount) {
+      return `<tr class="blank-row"><td colspan="${colcount}">&nbsp;</td></tr>`;
+    }
+
+    function clampPage(page, totalpages) {
+      if (page < 0) return 0;
+      if (page >= totalpages) return totalpages - 1;
+      return page;
     }
 
     function renderItemRow(ref) {
@@ -1280,40 +1519,28 @@
       el("defaultarchiveinput").value = state.config.bark_archive_mapping[state.config.default_group] || "";
 
       const list = el("grouplist");
-      list.innerHTML = Object.keys(state.config.notification_groups || {}).map((group) => `
-        <div class="group-card" data-group="${escapeAttr(group)}">
-          <div class="group-row">
-            <label>分组名称
-              <input data-group-field="name" value="${escapeAttr(group)}">
-            </label>
-            <label>图标URL
-              <div class="upload-field">
-                <input data-group-field="icon" value="${escapeAttr(state.config.notification_icons[group] || "")}">
-                <button data-upload-kind="group-icon" data-group="${escapeAttr(group)}" type="button">上传</button>
-              </div>
-            </label>
-            <label>Bark分组名称
-              <input data-group-field="archive" value="${escapeAttr(state.config.bark_archive_mapping[group] || "")}">
-            </label>
-            <div class="row-actions">
-              <button class="icon" data-move-group="-1" title="上移">↑</button>
-              <button class="icon" data-move-group="1" title="下移">↓</button>
-              <button class="icon danger" data-delete-group="${escapeAttr(group)}" title="删除">×</button>
-            </div>
-          </div>
-          <div class="group-items">
-            <h4>组内排序</h4>
-            ${(state.config.notification_groups[group] || []).map((name, index) => `
-              <div class="group-item-row">
-                <div>${escapeHtml(index + 1)}. ${escapeHtml(name)}</div>
-                <div class="row-actions">
-                  <button class="icon" data-move-group-item="${index}" data-direction="-1" title="上移">↑</button>
-                  <button class="icon" data-move-group-item="${index}" data-direction="1" title="下移">↓</button>
-                  <button class="icon danger" data-remove-group-item="${index}" title="移出分组">×</button>
-                </div>
-              </div>`).join("") || "<div class=\"status\">暂无项目，未分组项目会使用默认分组。</div>"}
-          </div>
-        </div>`).join("");
+      const groups = Object.keys(state.config.notification_groups || {});
+      const active = groups.includes(state.activegroup) ? state.activegroup : groups[0];
+      state.activegroup = active || "";
+      list.innerHTML = active
+        ? `${renderGroupSwitcher(groups, active)}${renderGroupCard(active)}`
+        : "<div class=\"status\">暂无分组。</div>";
+
+      list.querySelectorAll("[data-group-switch]").forEach((node) => {
+        node.addEventListener("click", () => {
+          state.activegroup = node.dataset.groupSwitch;
+          renderGroups();
+        });
+      });
+
+      list.querySelectorAll("[data-page-group]").forEach((node) => {
+        node.addEventListener("click", () => {
+          const group = node.dataset.pageGroup;
+          const page = Number(node.dataset.page);
+          state.grouppages[group] = page;
+          renderGroups();
+        });
+      });
 
       list.querySelectorAll("[data-group-field]").forEach((node) => {
         node.addEventListener("change", () => {
@@ -1334,6 +1561,8 @@
           delete state.config.bark_archive_mapping[group];
           delete state.config.build_number_check.groups[group];
           delete state.config.suffix_config.groups[group];
+          delete state.grouppages[group];
+          if (state.activegroup === group) state.activegroup = "";
           render();
           markDirty();
         });
@@ -1379,6 +1608,88 @@
       });
     }
 
+    function renderGroupSwitcher(groups, active) {
+      if (groups.length <= 1) return "";
+      return `
+        <div class="group-switcher" aria-label="切换分组">
+          ${groups.map((group) => `
+            <button class="group-switch ${group === active ? "active" : ""}" data-group-switch="${escapeAttr(group)}" type="button">
+              ${escapeHtml(group)} · ${(state.config.notification_groups[group] || []).length}
+            </button>
+          `).join("")}
+        </div>`;
+    }
+
+    function renderGroupCard(group) {
+      const items = state.config.notification_groups[group] || [];
+      const totalpages = Math.max(1, Math.ceil(items.length / ITEMS_PER_PAGE));
+      const currentpage = clampPage(state.grouppages[group] || 0, totalpages);
+      state.grouppages[group] = currentpage;
+      const pageitems = items
+        .map((name, index) => ({ name, index }))
+        .slice(currentpage * ITEMS_PER_PAGE, currentpage * ITEMS_PER_PAGE + ITEMS_PER_PAGE);
+      const blankcount = ITEMS_PER_PAGE - pageitems.length;
+      return `
+        <div class="group-card" data-group="${escapeAttr(group)}">
+          <div class="group-row">
+            <label>分组名称
+              <input data-group-field="name" value="${escapeAttr(group)}">
+            </label>
+            <label>图标URL
+              <div class="upload-field">
+                <input data-group-field="icon" value="${escapeAttr(state.config.notification_icons[group] || "")}">
+                <button data-upload-kind="group-icon" data-group="${escapeAttr(group)}" type="button">上传</button>
+              </div>
+            </label>
+            <label>Bark分组名称
+              <input data-group-field="archive" value="${escapeAttr(state.config.bark_archive_mapping[group] || "")}">
+            </label>
+            <div class="row-actions">
+              <button class="icon" data-move-group="-1" title="上移">↑</button>
+              <button class="icon" data-move-group="1" title="下移">↓</button>
+              <button class="icon danger" data-delete-group="${escapeAttr(group)}" title="删除">×</button>
+            </div>
+          </div>
+          <div class="group-items">
+            <h4>组内排序</h4>
+            ${items.length ? pageitems.map(({ name, index }) => renderGroupItemRow(name, index)).join("") : "<div class=\"status\">暂无项目，未分组项目会使用默认分组。</div>"}
+            ${Array.from({ length: items.length ? blankcount : 0 }, () => renderBlankGroupItem()).join("")}
+          </div>
+          ${items.length ? renderGroupPager(group, currentpage, totalpages) : ""}
+        </div>`;
+    }
+
+    function renderGroupItemRow(name, index) {
+      return `
+        <div class="group-item-row">
+          <div>${escapeHtml(index + 1)}. ${escapeHtml(name)}</div>
+          <div class="row-actions">
+            <button class="icon" data-move-group-item="${index}" data-direction="-1" title="上移">↑</button>
+            <button class="icon" data-move-group-item="${index}" data-direction="1" title="下移">↓</button>
+            <button class="icon danger" data-remove-group-item="${index}" title="移出分组">×</button>
+          </div>
+        </div>`;
+    }
+
+    function renderBlankGroupItem() {
+      return `
+        <div class="group-item-row blank-row">
+          <div>&nbsp;</div>
+          <div>&nbsp;</div>
+        </div>`;
+    }
+
+    function renderGroupPager(group, currentpage, totalpages) {
+      return `
+        <div class="pager">
+          <button class="icon" data-page-group="${escapeAttr(group)}" data-page="${Math.max(0, currentpage - 1)}" ${currentpage === 0 ? "disabled" : ""} title="上一页">‹</button>
+          <div class="pager-dots">
+            ${Array.from({ length: totalpages }, (_, index) => `<button class="pager-dot ${index === currentpage ? "active" : ""}" data-page-group="${escapeAttr(group)}" data-page="${index}" title="第 ${index + 1} 页"></button>`).join("")}
+          </div>
+          <button class="icon" data-page-group="${escapeAttr(group)}" data-page="${Math.min(totalpages - 1, currentpage + 1)}" ${currentpage >= totalpages - 1 ? "disabled" : ""} title="下一页">›</button>
+        </div>`;
+    }
+
     function renameGroup(oldgroup, newgroup) {
       if (!oldgroup || !newgroup || oldgroup === newgroup) return;
       state.config.notification_groups[newgroup] = state.config.notification_groups[oldgroup] || [];
@@ -1387,6 +1698,9 @@
       moveKey(state.config.bark_archive_mapping, oldgroup, newgroup);
       moveKey(state.config.build_number_check.groups, oldgroup, newgroup);
       moveKey(state.config.suffix_config.groups, oldgroup, newgroup);
+      state.grouppages[newgroup] = state.grouppages[oldgroup] || 0;
+      delete state.grouppages[oldgroup];
+      if (state.activegroup === oldgroup) state.activegroup = newgroup;
     }
 
     function moveGroup(group, direction) {
@@ -1414,7 +1728,7 @@
     }
 
     function renderDisplayControls() {
-      fillSelect(el("displaylevel"), [["全局", "global"], ["分组", "group"], ["项目", "app"]], state.display.level);
+      fillSelect(el("displaylevel"), [["来源", "global"], ["分组", "group"], ["项目", "app"]], state.display.level);
       const ownerlabel = el("displayownerlabel");
       const ownerselect = el("displayowner");
       if (state.display.level === "global") {
@@ -1446,7 +1760,7 @@
       if (level === "group" && !owner) return "<div class=\"status\">暂无分组</div>";
       if (level === "app" && !owner) return "<div class=\"status\">暂无监控项目</div>";
 
-      const title = level === "global" ? "全局默认配置" : level === "group" ? `分组级配置：${owner}` : `应用级配置：${owner}`;
+      const title = level === "global" ? "来源配置" : level === "group" ? `分组配置：${owner}` : `项目配置：${owner}`;
       const sources = level === "app"
         ? getItems().filter((item) => item.name === owner).map((item) => item.source)
         : SOURCE_NAMES;
@@ -1455,8 +1769,8 @@
         <section class="rule-section">
           <h3>${escapeHtml(title)}</h3>
           ${level === "global"
-            ? "<div class=\"status\">全局默认配置用于兜底。构建号比对开启时，1.0(1) 与 1.0(2) 视为不同版本，通知也保留括号内容；关闭时忽略括号内容，通知也去掉括号内容。</div>"
-            : "<div class=\"status\">应用级优先于分组级，分组级优先于全局默认。选择“继承上级”会删除这一层配置，回退到上一级。</div>"}
+            ? "<div class=\"status\">来源配置是兜底配置。构建号比对开启时，1.0(1) 与 1.0(2) 视为不同版本，通知也保留括号内容；关闭时忽略括号内容，通知也去掉括号内容。</div>"
+            : "<div class=\"status\">项目配置优先于分组配置，分组配置优先于来源配置。选择使用上一级配置会删除这一层配置，输入框内显示的是最终生效值。</div>"}
           ${ruleHeader(level === "global")}
           ${sources.map((source) => ruleRow(ruleState(level, owner, source))).join("")}
         </section>`;
@@ -1479,16 +1793,77 @@
       const bucket = level === "group" ? "groups" : "apps";
       const suffixvalue = state.config.suffix_config[bucket]?.[owner]?.[source];
       const buildvalue = state.config.build_number_check[bucket]?.[owner]?.[source];
+      const effectivesuffix = getEffectiveSuffixConfig(level, owner, source);
+      const effectivebuild = getEffectiveBuildConfig(level, owner, source);
+      const suffixlabels = ruleConfigLabels(level, owner, source, "suffix");
+      const buildlabels = ruleConfigLabels(level, owner, source, "build");
       return {
         level,
         owner,
         source,
         suffixmode: suffixvalue ? "override" : "inherit",
-        suffix: suffixvalue || ["", true],
+        suffix: suffixvalue || effectivesuffix,
+        suffixlabels,
         buildmode: buildvalue === undefined ? "inherit" : "override",
-        build: Boolean(buildvalue),
+        build: buildvalue === undefined ? effectivebuild : Boolean(buildvalue),
+        buildlabels,
         fixed: false,
       };
+    }
+
+    function getEffectiveSuffixConfig(level, owner, source) {
+      if (level === "app") {
+        const appvalue = state.config.suffix_config.apps?.[owner]?.[source];
+        if (appvalue) return [...appvalue];
+        const group = findConfiguredGroup(owner);
+        const groupvalue = group ? state.config.suffix_config.groups?.[group]?.[source] : null;
+        if (groupvalue) return [...groupvalue];
+      }
+      if (level === "group") {
+        const groupvalue = state.config.suffix_config.groups?.[owner]?.[source];
+        if (groupvalue) return [...groupvalue];
+      }
+      return [...(state.config.suffix_config.global?.[source] || [source, true])];
+    }
+
+    function getEffectiveBuildConfig(level, owner, source) {
+      if (level === "app") {
+        const appvalue = state.config.build_number_check.apps?.[owner]?.[source];
+        if (appvalue !== undefined) return Boolean(appvalue);
+        const group = findConfiguredGroup(owner);
+        const groupvalue = group ? state.config.build_number_check.groups?.[group]?.[source] : undefined;
+        if (groupvalue !== undefined) return Boolean(groupvalue);
+      }
+      if (level === "group") {
+        const groupvalue = state.config.build_number_check.groups?.[owner]?.[source];
+        if (groupvalue !== undefined) return Boolean(groupvalue);
+      }
+      return Boolean(state.config.build_number_check.global?.[source]);
+    }
+
+    function findConfiguredGroup(name) {
+      for (const [group, names] of Object.entries(state.config.notification_groups || {})) {
+        if (Array.isArray(names) && names.includes(name)) return group;
+      }
+      return "";
+    }
+
+    function ruleConfigLabels(level, owner, source, kind) {
+      if (level === "global") {
+        return { inherit: "使用来源配置", override: "使用来源配置" };
+      }
+      if (level === "group") {
+        return { inherit: "使用来源配置", override: "使用分组配置" };
+      }
+      const group = findConfiguredGroup(owner);
+      const hasgroup = kind === "suffix"
+        ? Boolean(group && state.config.suffix_config.groups?.[group]?.[source])
+        : group && state.config.build_number_check.groups?.[group]?.[source] !== undefined;
+      return { inherit: hasgroup ? "使用分组配置" : "使用来源配置", override: "使用项目配置" };
+    }
+
+    function buildText(value) {
+      return value ? "开启比对并保留括号" : "关闭比对并去除括号";
     }
 
     function ruleHeader(global) {
@@ -1499,32 +1874,27 @@
           <div>推送后缀文本</div>
           <div>推送时显示后缀</div>
           <div>构建号比对配置</div>
-          <div>括号内容处理</div>
         </div>`;
     }
 
     function ruleRow(data) {
       const suffixdisabled = !data.fixed && data.suffixmode === "inherit";
-      const builddisabled = !data.fixed && data.buildmode === "inherit";
       return `
         <div class="rule-grid">
           <div>${escapeHtml(data.source)}</div>
           <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixmode" ${data.fixed ? "disabled" : ""}>
-            <option value="inherit" ${data.suffixmode === "inherit" ? "selected" : ""}>继承上级</option>
-            <option value="override" ${data.suffixmode === "override" ? "selected" : ""}>自定义</option>
+            <option value="inherit" ${data.suffixmode === "inherit" ? "selected" : ""}>${escapeHtml(data.suffixlabels?.inherit || "使用来源配置")}</option>
+            <option value="override" ${data.suffixmode === "override" ? "selected" : ""}>${escapeHtml(data.suffixlabels?.override || "使用来源配置")}</option>
           </select>
           <input data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixtext" value="${escapeAttr(data.suffix[0] || "")}" ${suffixdisabled ? "disabled" : ""}>
           <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="suffixvisible" ${suffixdisabled ? "disabled" : ""}>
             <option value="true" ${data.suffix[1] ? "selected" : ""}>是</option>
             <option value="false" ${!data.suffix[1] ? "selected" : ""}>否</option>
           </select>
-          <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="buildmode" ${data.fixed ? "disabled" : ""}>
-            <option value="inherit" ${data.buildmode === "inherit" ? "selected" : ""}>继承上级</option>
-            <option value="override" ${data.buildmode === "override" ? "selected" : ""}>自定义</option>
-          </select>
-          <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="build" ${builddisabled ? "disabled" : ""}>
-            <option value="true" ${data.build ? "selected" : ""}>开启比对并保留</option>
-            <option value="false" ${!data.build ? "selected" : ""}>关闭比对并去除</option>
+          <select data-rule data-level="${escapeAttr(data.level)}" data-owner="${escapeAttr(data.owner)}" data-source="${escapeAttr(data.source)}" data-field="buildconfig">
+            ${data.fixed ? "" : `<option value="inherit" ${data.buildmode === "inherit" ? "selected" : ""}>${escapeHtml(data.buildlabels?.inherit || "使用来源配置")}：${escapeHtml(buildText(data.build))}</option>`}
+            <option value="true" ${data.buildmode === "override" && data.build ? "selected" : ""}>${escapeHtml(data.buildlabels?.override || "使用来源配置")}：开启比对并保留括号</option>
+            <option value="false" ${data.buildmode === "override" && !data.build ? "selected" : ""}>${escapeHtml(data.buildlabels?.override || "使用来源配置")}：关闭比对并去除括号</option>
           </select>
         </div>`;
     }
@@ -1549,7 +1919,7 @@
       const buildroot = level === "global" ? state.config.build_number_check.global : ensureNested(state.config.build_number_check, level, owner);
 
       if (field === "suffixmode") {
-        if (node.value === "override") suffixroot[source] = suffixroot[source] || ["", true];
+        if (node.value === "override") suffixroot[source] = suffixroot[source] || getEffectiveSuffixConfig(level, owner, source);
         else delete suffixroot[source];
       }
       if (field === "suffixtext") {
@@ -1560,12 +1930,12 @@
         suffixroot[source] = suffixroot[source] || ["", true];
         suffixroot[source][1] = node.value === "true";
       }
-      if (field === "buildmode") {
-        if (node.value === "override") buildroot[source] = Boolean(buildroot[source]);
-        else delete buildroot[source];
-      }
-      if (field === "build") {
-        if (level === "global" || buildroot[source] !== undefined) buildroot[source] = node.value === "true";
+      if (field === "buildconfig") {
+        if (node.value === "inherit" && level !== "global") {
+          delete buildroot[source];
+        } else {
+          buildroot[source] = node.value === "true";
+        }
       }
     }
 
@@ -1856,7 +2226,9 @@
     }
 
     async function uploadToInput(input, button, ondone) {
-      const file = await chooseImageFile();
+      const selectedfile = await chooseImageFile();
+      if (!selectedfile) return;
+      const file = await editImageFile(selectedfile);
       if (!file) return;
       const originalText = button?.textContent || "上传";
       try {
@@ -1888,6 +2260,169 @@
         input.addEventListener("change", () => resolve(input.files?.[0] || null), { once: true });
         input.click();
       });
+    }
+
+    function editImageFile(file) {
+      return new Promise((resolve) => {
+        const editor = el("imageeditor");
+        const canvas = el("imageeditorcanvas");
+        const maskselect = el("imagemask");
+        const zoominput = el("imagezoom");
+        const confirmbtn = el("imageconfirmbtn");
+        const cancelbtn = el("imagecancelbtn");
+        const ctx = canvas.getContext("2d");
+        const url = URL.createObjectURL(file);
+        const image = new Image();
+        let offsetx = 0;
+        let offsety = 0;
+        let baseScale = 1;
+        let dragging = false;
+        let lastx = 0;
+        let lasty = 0;
+
+        const cleanup = (result) => {
+          URL.revokeObjectURL(url);
+          editor.classList.add("hidden");
+          canvas.classList.remove("dragging");
+          confirmbtn.onclick = null;
+          cancelbtn.onclick = null;
+          maskselect.onchange = null;
+          zoominput.oninput = null;
+          canvas.onpointerdown = null;
+          canvas.onpointermove = null;
+          canvas.onpointerup = null;
+          canvas.onpointercancel = null;
+          resolve(result);
+        };
+
+        const resetView = () => {
+          offsetx = 0;
+          offsety = 0;
+          zoominput.value = "1";
+          updateBaseScale();
+          renderImageEditorPreview(image, ctx, maskselect.value, baseScale, Number(zoominput.value), offsetx, offsety);
+        };
+
+        const updateBaseScale = () => {
+          baseScale = maskselect.value === "original"
+            ? Math.min(canvas.width / image.width, canvas.height / image.height)
+            : Math.max(canvas.width / image.width, canvas.height / image.height);
+          zoominput.disabled = maskselect.value === "original";
+        };
+
+        maskselect.onchange = resetView;
+        zoominput.oninput = () => renderImageEditorPreview(image, ctx, maskselect.value, baseScale, Number(zoominput.value), offsetx, offsety);
+
+        canvas.onpointerdown = (event) => {
+          if (maskselect.value === "original") return;
+          dragging = true;
+          canvas.classList.add("dragging");
+          canvas.setPointerCapture(event.pointerId);
+          const point = canvasPoint(canvas, event);
+          lastx = point.x;
+          lasty = point.y;
+        };
+        canvas.onpointermove = (event) => {
+          if (!dragging) return;
+          const point = canvasPoint(canvas, event);
+          offsetx += point.x - lastx;
+          offsety += point.y - lasty;
+          lastx = point.x;
+          lasty = point.y;
+          renderImageEditorPreview(image, ctx, maskselect.value, baseScale, Number(zoominput.value), offsetx, offsety);
+        };
+        canvas.onpointerup = (event) => {
+          dragging = false;
+          canvas.classList.remove("dragging");
+          canvas.releasePointerCapture(event.pointerId);
+        };
+        canvas.onpointercancel = () => {
+          dragging = false;
+          canvas.classList.remove("dragging");
+        };
+
+        cancelbtn.onclick = () => cleanup(null);
+        confirmbtn.onclick = () => {
+          if (maskselect.value === "original") {
+            cleanup(file);
+            return;
+          }
+          renderImageEditorPreview(image, ctx, maskselect.value, baseScale, Number(zoominput.value), offsetx, offsety);
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              cleanup(null);
+              showToast("图片处理失败", "error", 5200);
+              return;
+            }
+            cleanup(new File([blob], pngFilename(file.name), { type: "image/png" }));
+          }, "image/png");
+        };
+
+        image.onload = () => {
+          maskselect.value = "original";
+          editor.classList.remove("hidden");
+          resetView();
+        };
+        image.onerror = () => {
+          cleanup(null);
+          showToast("图片读取失败", "error", 5200);
+        };
+        image.src = url;
+      });
+    }
+
+    function renderImageEditorPreview(image, ctx, mask, baseScale, zoom, offsetx, offsety) {
+      const size = ctx.canvas.width;
+      ctx.clearRect(0, 0, size, size);
+      ctx.save();
+      if (mask !== "original") {
+        applyImageMask(ctx, mask, size);
+      }
+      const scale = baseScale * zoom;
+      const width = image.width * scale;
+      const height = image.height * scale;
+      const x = (size - width) / 2 + offsetx;
+      const y = (size - height) / 2 + offsety;
+      ctx.drawImage(image, x, y, width, height);
+      ctx.restore();
+    }
+
+    function applyImageMask(ctx, mask, size) {
+      ctx.beginPath();
+      if (mask === "circle") {
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+      } else if (mask === "rounded") {
+        roundedRectPath(ctx, 0, 0, size, size, 88);
+      } else {
+        ctx.rect(0, 0, size, size);
+      }
+      ctx.clip();
+    }
+
+    function roundedRectPath(ctx, x, y, width, height, radius) {
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function canvasPoint(canvas, event) {
+      const rect = canvas.getBoundingClientRect();
+      const scale = canvas.width / rect.width;
+      return {
+        x: (event.clientX - rect.left) * scale,
+        y: (event.clientY - rect.top) * scale,
+      };
+    }
+
+    function pngFilename(name) {
+      return `${name.replace(/\.[^.]*$/, "") || "image"}.png`;
     }
 
     function syncJsonToState() {
