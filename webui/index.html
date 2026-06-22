@@ -1,4 +1,4 @@
-、<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -227,7 +227,14 @@
     .mark img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
+      display: block;
+    }
+
+    .mark.has-image {
+      border-radius: 0;
+      background: transparent;
+      color: transparent;
     }
 
     .brand h1 {
@@ -372,6 +379,12 @@
       padding: 12px;
     }
 
+    #itemsTab {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
     .summary {
       display: grid;
       grid-template-columns: repeat(5, minmax(120px, 1fr));
@@ -430,7 +443,7 @@
 
     .source-list {
       display: grid;
-      gap: 14px;
+      gap: 16px;
     }
 
     .source-switcher,
@@ -442,6 +455,24 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--panel);
+    }
+
+    .source-switcher.scrollable {
+      display: flex;
+      grid-template-columns: none;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-snap-type: x proximity;
+    }
+
+    .source-switcher.scrollable::-webkit-scrollbar {
+      display: none;
+    }
+
+    .source-switcher.scrollable .source-switch {
+      flex: 0 0 calc((100% - 64px) / 5);
+      scroll-snap-align: start;
     }
 
     .source-switch,
@@ -467,6 +498,11 @@
       gap: 10px;
       padding: 10px 12px;
       border-top: 1px solid var(--line);
+    }
+
+    .source-pager {
+      justify-content: flex-end;
+      padding-right: 16px;
     }
 
     .pager-dots {
@@ -702,6 +738,8 @@
       .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .image-editor { grid-template-columns: 1fr; }
       .image-editor-preview { min-height: 260px; }
+      .source-switcher { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .source-switcher.scrollable .source-switch { flex-basis: calc((100% - 32px) / 2); }
       .tools, .group-row, .default-group-row, .rule-controls, .rule-grid, .setting-grid, .form-grid {
         grid-template-columns: 1fr;
       }
@@ -1009,6 +1047,7 @@
       validating: false,
       runTimer: null,
       loadRetryTimer: null,
+      statusTimer: null,
     };
 
     function baseConfig() {
@@ -1064,6 +1103,7 @@
         pagetitle: parsed.pagetitle || "Monitor",
         logourl: parsed.logourl || "",
         faviconurl: parsed.faviconurl || "",
+        assetversion: parsed.assetversion || Date.now(),
         timezone: parsed.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Hong_Kong",
         theme: parsed.theme || "quiet",
         colors: { ...THEMES.quiet, ...(parsed.colors || {}) },
@@ -1083,15 +1123,17 @@
       el("brandname").textContent = settings.brandname || "Monitor";
       const favicon = el("favicon");
       if (settings.faviconurl) {
-        favicon.href = settings.faviconurl;
+        favicon.href = versionedAssetUrl(settings.faviconurl, settings.assetversion);
       } else {
         favicon.removeAttribute("href");
       }
 
       const mark = el("brandmark");
       if (settings.logourl) {
-        mark.innerHTML = `<img alt="" src="${escapeAttr(settings.logourl)}">`;
+        mark.classList.add("has-image");
+        mark.innerHTML = `<img alt="" src="${escapeAttr(versionedAssetUrl(settings.logourl, settings.assetversion))}">`;
       } else {
+        mark.classList.remove("has-image");
         mark.textContent = (settings.brandname || "Monitor").trim().charAt(0).toUpperCase() || "M";
       }
 
@@ -1105,6 +1147,12 @@
       root.style.setProperty("--accent", colors.accent);
       root.style.setProperty("--accent-soft", mixHex(colors.accent, "#ffffff", 0.82));
       fillSettingsForm();
+    }
+
+    function versionedAssetUrl(url, version) {
+      if (!url) return "";
+      const separator = url.includes("?") ? "&" : "?";
+      return `${url}${separator}v=${encodeURIComponent(version || Date.now())}`;
     }
 
     function workerurl() {
@@ -1143,16 +1191,51 @@
       return data;
     }
 
-    function setStatus(text, kind = "") {
+    function setStatus(text, kind = "", options = {}) {
       const target = el("status");
+      window.clearTimeout(state.statusTimer);
       target.textContent = text;
       target.className = `status ${kind}`.trim();
+      updateStatusVisibility();
+      const persist = options.persist ?? isPersistentStatus(text, kind);
+      if (!persist) {
+        state.statusTimer = window.setTimeout(() => clearStatus(), options.timeout || 3000);
+      }
+    }
+
+    function clearStatus() {
+      window.clearTimeout(state.statusTimer);
+      const target = el("status");
+      target.textContent = "";
+      target.className = "status hidden";
+      if (state.dirty && !state.validating) {
+        setStatus("有未保存改动", "warn", { persist: true });
+      }
+    }
+
+    function isPersistentStatus(text, kind) {
+      if (!text) return false;
+      if (kind === "error") return true;
+      return [
+        "读取中",
+        "自动校验中",
+        "校验中",
+        "保存中",
+        "触发中",
+      ].includes(text) || text.includes("未保存") || text.startsWith("读取失败，正在重试") || text.startsWith("读取失败：");
+    }
+
+    function updateStatusVisibility() {
+      const target = el("status");
+      target.classList.toggle("hidden", state.activeTab === "settings" || !target.textContent.trim());
     }
 
     function setRetryStatus(text) {
       const target = el("status");
+      window.clearTimeout(state.statusTimer);
       target.className = "status error";
       target.innerHTML = `${escapeHtml(text)} <button id="retryloadbtn" type="button">重试</button>`;
+      updateStatusVisibility();
       el("retryloadbtn").addEventListener("click", () => {
         loadConfigWithRetry({ force: true }).catch((error) => setRetryStatus(error.message));
       });
@@ -1191,6 +1274,7 @@
         if (!state.validating) setStatus("有未保存改动", "warn");
       } else {
         el("savebtn").classList.add("primary");
+        if (el("status").textContent.trim() === "有未保存改动") clearStatus();
       }
     }
 
@@ -1359,6 +1443,7 @@
           renderItems();
         });
       });
+      container.querySelector(".source-switch.active")?.scrollIntoView({ block: "nearest", inline: "center" });
 
       container.querySelectorAll("[data-edit]").forEach((node) => {
         node.addEventListener("change", () => {
@@ -1410,11 +1495,12 @@
 
     function renderSourceSwitcher(sourcegroups, active, fixed) {
       if (fixed || sourcegroups.length <= 1) return "";
+      const scrollable = sourcegroups.length > 5;
       return `
-        <div class="source-switcher" aria-label="切换来源表">
-          ${sourcegroups.map(({ source, refs }) => `
+        <div class="source-switcher ${scrollable ? "scrollable" : ""}" aria-label="切换来源表">
+          ${sourcegroups.map(({ source }) => `
             <button class="source-switch ${source === active ? "active" : ""}" data-source-switch="${escapeAttr(source)}" type="button">
-              ${escapeHtml(source)} · ${refs.length}
+              ${escapeHtml(source)}
             </button>
           `).join("")}
         </div>`;
@@ -1434,7 +1520,7 @@
       return `
         <section class="panel">
           <div class="panel-head">
-            <h2 class="panel-title">${escapeHtml(source)} · ${refs.length}</h2>
+            <h2 class="panel-title">${escapeHtml(source)}</h2>
           </div>
           <div class="table-wrap">
             <table>
@@ -1461,12 +1547,10 @@
 
     function renderPager(source, currentpage, totalpages) {
       return `
-        <div class="pager">
-          <button class="icon" data-page-source="${escapeAttr(source)}" data-page="${Math.max(0, currentpage - 1)}" ${currentpage === 0 ? "disabled" : ""} title="上一页">‹</button>
+        <div class="pager source-pager">
           <div class="pager-dots">
             ${Array.from({ length: totalpages }, (_, index) => `<button class="pager-dot ${index === currentpage ? "active" : ""}" data-page-source="${escapeAttr(source)}" data-page="${index}" title="第 ${index + 1} 页"></button>`).join("")}
           </div>
-          <button class="icon" data-page-source="${escapeAttr(source)}" data-page="${Math.min(totalpages - 1, currentpage + 1)}" ${currentpage >= totalpages - 1 ? "disabled" : ""} title="下一页">›</button>
         </div>`;
     }
 
@@ -1614,7 +1698,7 @@
         <div class="group-switcher" aria-label="切换分组">
           ${groups.map((group) => `
             <button class="group-switch ${group === active ? "active" : ""}" data-group-switch="${escapeAttr(group)}" type="button">
-              ${escapeHtml(group)} · ${(state.config.notification_groups[group] || []).length}
+              ${escapeHtml(group)}
             </button>
           `).join("")}
         </div>`;
@@ -1974,6 +2058,7 @@
         document.querySelector(`[data-tab="${name}"]`).classList.toggle("active", state.activeTab === name);
       }
       el("topactions").classList.toggle("hidden", state.activeTab === "settings");
+      updateStatusVisibility();
     }
 
     function fillSettingsForm() {
@@ -2570,11 +2655,13 @@
             }
             if (targetid === "settinglogourl") {
               state.settings.logourl = url;
+              refreshAssetVersion();
               saveSettings();
               return;
             }
             if (targetid === "settingfaviconurl") {
               state.settings.faviconurl = url;
+              refreshAssetVersion();
               saveSettings();
             }
           });
@@ -2596,6 +2683,7 @@
         const eventname = el(id).tagName === "SELECT" ? "change" : "input";
         el(id).addEventListener(eventname, () => {
           state.settings[key] = el(id).value.trim();
+          if (key === "logourl" || key === "faviconurl") refreshAssetVersion();
           saveSettings();
           if (key === "timezone") refreshLatestRun().catch(() => {});
         });
@@ -2624,6 +2712,10 @@
 
     function safeJson(raw, fallback) {
       try { return JSON.parse(raw); } catch { return fallback; }
+    }
+
+    function refreshAssetVersion() {
+      state.settings.assetversion = Date.now();
     }
 
     function sleep(ms) {
