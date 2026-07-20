@@ -114,5 +114,9 @@
   "app_956857223_de": {
     "latest": "4.55.1",
     "prev": "4.55"
+  },
+  "gh_JMBQ01/azurlan": {
+    "latest": "3.3.0",
+    "prev": null
   }
 }
