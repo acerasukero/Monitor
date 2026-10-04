@@ -118,5 +118,9 @@
   "gh_JMBQ01/azurlan": {
     "latest": "3.4.0",
     "prev": "3.3.0"
+  },
+  "app_6757695187_kr": {
+    "latest": "1.0.2",
+    "prev": null
   }
 }
