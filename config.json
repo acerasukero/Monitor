@@ -31,11 +31,6 @@
       "us"
     ],
     [
-      "Ready US",
-      "1358741926",
-      "us"
-    ],
-    [
       "Loon US",
       "1373567447",
       "us"
@@ -44,11 +39,6 @@
       "Telegram US",
       "686449807",
       "us"
-    ],
-    [
-      "N26 DE",
-      "956857223",
-      "de"
     ],
     [
       "Fate/Grand Order JP",
@@ -66,9 +56,9 @@
       "jp"
     ],
     [
-      "IDOLY PRIDE JP",
-      "1535925293",
-      "jp"
+      "Our Notes KR",
+      "6757695187",
+      "kr"
     ],
     [
       "NIKKE KR",
@@ -227,7 +217,7 @@
       "Fate/Grand Order US",
       "BanG Dream JP",
       "Project Sekai JP",
-      "IDOLY PRIDE JP",
+      "Our Notes KR",
       "NIKKE KR"
     ],
     "应用更新": [
@@ -237,10 +227,8 @@
       "PixEz TW",
       "Bybit US",
       "Bitget Wallet US",
-      "Ready US",
       "Loon US",
-      "Telegram US",
-      "N26 DE"
+      "Telegram US"
     ],
     "GitHub项目更新": [
       "JMBQ悬浮窗",
@@ -271,8 +259,8 @@
     "Fate/Grand Order TW": "https://261213.xyz/FateGrandOrder.png",
     "Fate/Grand Order US": "https://261213.xyz/FateGrandOrder.png",
     "BanG Dream JP": "https://261213.xyz/BanGDream.png",
-    "IDOLY PRIDE JP": "https://261213.xyz/IDOLYPRIDE.png",
     "Project Sekai JP": "https://261213.xyz/ProjectSekai.png",
+    "Our Notes KR": "https://261213.xyz/OurNotes.png",
     "NIKKE KR": "https://261213.xyz/NIKKE.png",
     "币安 HK": "https://261213.xyz/Binance.png",
     "欧易 HK": "https://261213.xyz/OKX.png",
@@ -280,10 +268,8 @@
     "PixEz TW": "https://261213.xyz/PixEz.png",
     "Bybit US": "https://261213.xyz/Bybit.png",
     "Bitget Wallet US": "https://261213.xyz/Bitget%20Wallet.png",
-    "Ready US": "https://261213.xyz/Ready.png",
     "Loon US": "https://261213.xyz/Loon.png",
     "Telegram US": "https://261213.xyz/Telegram.png",
-    "N26 DE": "https://261213.xyz/N26.png",
     "JMBQ悬浮窗": "https://261213.xyz/JMBQ.PNG",
     "能帮我弄干净吗？": "https://image.tmdb.org/t/p/w1280/1pRDbev2ITZCqHgow2pDvj4AEBP.jpg",
     "非人学生与厌世教师": "https://image.tmdb.org/t/p/w1280/1GmD3pP3aCQAknNem6yaQ5gP5os.jpg",
